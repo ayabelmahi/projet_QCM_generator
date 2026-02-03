@@ -1,0 +1,65 @@
+services:
+  backend:
+    build: ./backend
+    container_name: qsm_backend
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    container_name: qsm_nginx
+    ports:
+      - "8090:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+
+  frontend:
+    build: ./frontend
+    container_name: qsm_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["npm","run","dev","--","--host","0.0.0.0"]
+
+  db:
+    image: mysql:8.0
+    container_name: qsm_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: qsm
+      MYSQL_USER: qsm_user
+      MYSQL_PASSWORD: qsm_pass
+    ports:
+      - "3308:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: qsm_phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8091:80"
+    depends_on:
+      - db
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: qsm_mailhog
+    ports:
+      - "8092:8025"
+      - "1025:1025"
+
+volumes:
+  db_data:

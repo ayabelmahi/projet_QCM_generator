@@ -1,0 +1,27 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Symfony
+/backend/var/
+/backend/vendor/
+
+# Env
+.env
+.env.local
+
+# Docker volumes (si tu en as)
+db_data/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
