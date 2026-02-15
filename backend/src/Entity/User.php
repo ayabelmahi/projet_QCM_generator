@@ -2,8 +2,10 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource; // Ajout pour l'API
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection; // Ajouté
+use Doctrine\Common\Collections\Collection; // Ajouté
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -29,9 +31,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    // Ajout du champ fullName (Point 13.1 du cahier des charges)
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $fullName = null;
+    private ?string $fullName = null; //
+
+    // Ajout de la relation OneToMany vers Qcm
+    #[ORM\OneToMany(mappedBy: 'author', targetEntity: Qcm::class, orphanRemoval: true)]
+    private Collection $qcms;
+
+    public function __construct()
+    {
+        $this->qcms = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -78,7 +88,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // Getter et Setter pour fullName
     public function getFullName(): ?string
     {
         return $this->fullName;
@@ -87,6 +96,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setFullName(?string $fullName): static
     {
         $this->fullName = $fullName;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Qcm>
+     */
+    public function getQcms(): Collection
+    {
+        return $this->qcms;
+    }
+
+    public function addQcm(Qcm $qcm): static
+    {
+        if (!$this->qcms->contains($qcm)) {
+            $this->qcms->add($qcm);
+            $qcm->setAuthor($this);
+        }
+        return $this;
+    }
+
+    public function removeQcm(Qcm $qcm): static
+    {
+        if ($this->qcms->removeElement($qcm)) {
+            // set the owning side to null (unless already changed)
+            if ($qcm->getAuthor() === $this) {
+                $qcm->setAuthor(null);
+            }
+        }
         return $this;
     }
 
