@@ -10,7 +10,7 @@ import {
     Menu,
     X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 
 const Home = () => {
     console.log("Coucou, je suis sur la Home !");
