@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\ChoiceRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ChoiceRepository::class)]
@@ -61,5 +62,10 @@ class Choice
     {
         $this->isCorrect = $isCorrect;
         return $this;
+    }
+
+    public function isCorrect(): ?bool
+    {
+        return $this->isCorrect;
     }
 }
