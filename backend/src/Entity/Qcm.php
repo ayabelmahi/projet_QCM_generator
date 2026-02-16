@@ -156,4 +156,9 @@ class Qcm
         }
         return $this;
     }
+
+    public function isPdfAllowed(): ?bool
+    {
+        return $this->isPdfAllowed;
+    }
 }
