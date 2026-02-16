@@ -1,5 +1,6 @@
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 
@@ -7,13 +8,15 @@ function App() {
     return (
         <Router>
             <Routes>
-                {/* Par défaut, on arrive sur le Login */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
+                {/* 1. La page d'accueil par défaut */}
+                <Route path="/" element={<Home />} />
 
+                {/* 2. Tes pages d'authentification */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
 
-                {/* On ajoutera le Dashboard ici plus tard */}
+                {/* 3. Sécurité : Si l'utilisateur tape une URL inconnue, on le ramène à la Home */}
+                <Route path="*" element={<Home />} />
             </Routes>
         </Router>
     )
