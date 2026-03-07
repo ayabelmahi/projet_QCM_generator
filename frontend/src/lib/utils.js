@@ -1,7 +1,10 @@
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-// Cette fonction permet de fusionner les classes Tailwind proprement
+/**
+ * Combine des classes CSS de façon conditionnelle
+ * et fusionne les conflits Tailwind CSS.
+ */
 export function cn(...inputs) {
     return twMerge(clsx(inputs));
 }

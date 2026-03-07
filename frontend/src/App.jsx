@@ -1,25 +1,45 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Register from './pages/Register'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Import des Providers et UI
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
+
+// Import de tes pages
+import Index from "./pages/Index";
+import Login from './pages/Login';
+import Register from './pages/Register';
+import NotFound from "./pages/NotFound";
+
+// Initialisation du client pour les requêtes API (React Query)
+const queryClient = new QueryClient();
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                {/* 1. La page d'accueil par défaut */}
-                <Route path="/" element={<Home />} />
+        <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+                {/* Les Toasters permettent d'afficher les notifications partout dans l'app */}
+                <Toaster />
+                <Sonner />
 
-                {/* 2. Tes pages d'authentification */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+                <Router>
+                    <Routes>
+                        {/* Route d'accueil (Landing Page) */}
+                        <Route path="/" element={<Index />} />
 
-                {/* 3. Sécurité : Si l'utilisateur tape une URL inconnue, on le ramène à la Home */}
-                <Route path="*" element={<Home />} />
-            </Routes>
-        </Router>
-    )
+                        {/* Tes routes d'authentification conservées */}
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+
+                        {/* Gestion de l'erreur 404 - Toujours en dernier */}
+                        <Route path="*" element={<NotFound />} />
+                    </Routes>
+                </Router>
+            </TooltipProvider>
+        </QueryClientProvider>
+    );
 }
 
-export default App
+export default App;
