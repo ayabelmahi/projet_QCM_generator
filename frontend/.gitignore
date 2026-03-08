@@ -22,3 +22,35 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# ========================
+# Backend Symfony
+# ========================
+backend/var/
+backend/vendor/
+
+# Symfony env files
+backend/.env
+backend/.env.local
+backend/.env.*.local
+
+# ========================
+# Frontend
+# ========================
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# env frontend
+frontend/.env
+frontend/.env.local
+
+# ========================
+# Docker
+# ========================
+db_data/
+*.pid
+
+# ========================
+# OS files
+# ========================
+Thumbs.db
