@@ -20,7 +20,7 @@
 }
 
 body {
-  background-color: #f8fafc; /* bg-slate-50 pour faire ressortir la carte blanche */
+  background-color: #f8fafc;/* bg-slate-50 pour faire ressortir la carte blanche */
   color: hsl(var(--foreground));
   font-family: 'Inter', sans-serif;
   margin: 0;

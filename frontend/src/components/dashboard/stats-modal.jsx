@@ -1,15 +1,15 @@
-"use client"
-
-import React, { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "../ui_dashboard/dialog"
+
 import { Card } from "../ui_dashboard/card"
 import { Progress } from "../ui_dashboard/progress"
-import { Send, CheckCircle2, TrendingUp, Target, Loader2 } from "lucide-react"
+
+import { Send, CheckCircle2, TrendingUp, Target } from "lucide-react"
+
 import {
   BarChart,
   Bar,
@@ -23,164 +23,217 @@ import {
 } from "recharts"
 
 export function StatsModal({ qcm, open, onOpenChange }) {
-  const [stats, setStats] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Adaptation API : On charge les stats spécifiques au QCM quand la modale s'ouvre
-  useEffect(() => {
-    if (open && qcm?.id) {
-      const fetchQuizStats = async () => {
-        setIsLoading(true)
-        try {
-          // Exemple d'appel API Symfony : /api/quizzes/{id}/stats
-          // const response = await fetch(`/api/quizzes/${qcm.id}/stats`)
-          // const data = await response.json()
-          
-          // Simulation data
-          await new Promise(r => setTimeout(r, 600))
-          setStats({
-            invitationsSent: 45,
-            completedAttempts: 38,
-            successRate: 72,
-            averageScore: 68,
-            scoreDistribution: [
-              { range: "0-20", count: 2 },
-              { range: "20-40", count: 4 },
-              { range: "40-60", count: 10 },
-              { range: "60-80", count: 18 },
-              { range: "80-100", count: 4 },
-            ],
-            successOverTime: [
-              { date: "Lun", rate: 60 },
-              { date: "Mar", rate: 65 },
-              { date: "Mer", rate: 70 },
-              { date: "Jeu", rate: 72 },
-              { date: "Ven", rate: 68 },
-            ]
-          })
-        } catch (error) {
-          console.error("Erreur lors du chargement des stats", error)
-        } finally {
-          setIsLoading(false)
-        }
-      }
-      fetchQuizStats()
-    }
-  }, [open, qcm?.id])
-
   if (!qcm) return null
 
-  const completionRate = stats ? Math.round((stats.completedAttempts / stats.invitationsSent) * 100) : 0
+  const questions = qcm.questions || []
 
-  const kpis = stats ? [
-    { label: "Invitations", value: stats.invitationsSent, icon: Send, color: "text-blue-500", bg: "bg-blue-50" },
-    { label: "Tentatives", value: stats.completedAttempts, icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { label: "Taux réussite", value: `${stats.successRate}%`, icon: TrendingUp, color: "text-indigo-500", bg: "bg-indigo-50" },
-    { label: "Score moyen", value: `${stats.averageScore}%`, icon: Target, color: "text-amber-500", bg: "bg-amber-50" },
-  ] : []
+  const totalQuestions = questions.length
+  const totalChoices = questions.reduce(
+    (acc, question) => acc + (question.choices?.length || 0),
+    0
+  )
+
+  const totalCorrectChoices = questions.reduce(
+    (acc, question) =>
+      acc +
+      (question.choices?.filter((choice) => choice.isCorrect).length || 0),
+    0
+  )
+
+  const timedValue = qcm.timer || 0
+  const successRate = qcm.successRate || 0
+
+  const multimediaQuestions = questions.filter(
+    (q) => q.type === "image" || q.type === "video" || q.type === "audio"
+  ).length
+
+  const completionRate = totalQuestions > 0
+    ? Math.round((totalCorrectChoices / totalChoices) * 100 || 0)
+    : 0
+
+  const kpis = [
+    {
+      label: "Questions",
+      value: totalQuestions,
+      icon: Send,
+      color: "text-primary",
+    },
+    {
+      label: "Choix corrects",
+      value: totalCorrectChoices,
+      icon: CheckCircle2,
+      color: "text-[hsl(142,71%,45%)]",
+    },
+    {
+      label: "Taux requis",
+      value: `${successRate}%`,
+      icon: TrendingUp,
+      color: "text-[hsl(250,50%,55%)]",
+    },
+    {
+      label: "Timer",
+      value: timedValue ? `${timedValue} min` : "Aucun",
+      icon: Target,
+      color: "text-[hsl(38,92%,50%)]",
+    },
+  ]
+
+  const distributionByQuestion = questions.map((question, index) => ({
+    name: `Q${index + 1}`,
+    count: question.choices?.length || 0,
+  }))
+
+  const correctnessByQuestion = questions.map((question, index) => ({
+    name: `Q${index + 1}`,
+    rate:
+      question.choices?.length > 0
+        ? Math.round(
+            ((question.choices.filter((choice) => choice.isCorrect).length || 0) /
+              question.choices.length) *
+              100
+          )
+        : 0,
+  }))
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl border-none bg-white p-0 overflow-hidden shadow-2xl">
-        <DialogHeader className="p-6 bg-gray-50/50 border-b border-gray-100">
-          <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="h-8 w-1 bg-indigo-600 rounded-full" />
+      <DialogContent className="max-w-3xl border-border bg-card p-0">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="font-display text-lg font-bold text-card-foreground">
             Statistiques : {qcm.title}
           </DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-            <p className="text-sm font-medium text-gray-500">Analyse des données en cours...</p>
+        <div className="flex flex-col gap-5 p-6">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {kpis.map((kpi) => (
+              <Card key={kpi.label} className="border-border/50 bg-background p-4">
+                <div className="flex items-center gap-2">
+                  <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {kpi.label}
+                  </span>
+                </div>
+
+                <p className="mt-1 font-display text-xl font-bold text-card-foreground">
+                  {kpi.value}
+                </p>
+              </Card>
+            ))}
           </div>
-        ) : stats ? (
-          <div className="flex flex-col gap-6 p-6">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              {kpis.map((kpi) => (
-                <Card key={kpi.label} className="border-gray-100 bg-white p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`p-1.5 rounded-lg ${kpi.bg}`}>
-                      <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{kpi.label}</span>
-                  </div>
-                  <p className="text-2xl font-black text-gray-900">{kpi.value}</p>
-                </Card>
-              ))}
+
+          <Card className="border-border/50 bg-background p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-medium text-card-foreground">
+                Structure du QCM
+              </span>
+              <span className="text-sm font-bold text-primary">
+                {completionRate}%
+              </span>
             </div>
 
-            {/* Completion Progress */}
-            <Card className="border-gray-100 bg-white p-5 shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-gray-900">Taux de complétion</h4>
-                  <p className="text-[11px] text-gray-500">{stats.completedAttempts} sur {stats.invitationsSent} candidats ont terminé</p>
-                </div>
-                <span className="text-xl font-black text-indigo-600">{completionRate}%</span>
-              </div>
-              <Progress value={completionRate} className="h-2.5 bg-gray-100" />
+            <Progress value={completionRate} className="h-2" />
+
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {totalCorrectChoices} choix corrects sur {totalChoices} choix au total
+            </p>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              {multimediaQuestions} question(s) avec media, {totalQuestions - multimediaQuestions} question(s) texte
+            </p>
+          </Card>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card className="border-border/50 bg-background p-4">
+              <h4 className="mb-4 text-sm font-semibold text-card-foreground">
+                Nombre de choix par question
+              </h4>
+
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={distributionByQuestion}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(220, 13%, 91%)"
+                  />
+
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }}
+                    axisLine={{ stroke: "hsl(220, 13%, 91%)" }}
+                    tickLine={false}
+                  />
+
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(0, 0%, 100%)",
+                      border: "1px solid hsl(220, 13%, 91%)",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+
+                  <Bar
+                    dataKey="count"
+                    fill="hsl(221, 83%, 53%)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </Card>
 
-            {/* Charts */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {/* Score Distribution */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Distribution des scores</h4>
-                <div className="h-[200px] w-full border border-gray-50 rounded-xl p-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats.scoreDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis 
-                        dataKey="range" 
-                        tick={{ fontSize: 10, fill: "#94a3b8" }} 
-                        axisLine={false} 
-                        tickLine={false} 
-                      />
-                      <YAxis hide />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '11px' }}
-                      />
-                      <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} barSize={30} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+            <Card className="border-border/50 bg-background p-4">
+              <h4 className="mb-4 text-sm font-semibold text-card-foreground">
+                Pourcentage de bonnes reponses par question
+              </h4>
 
-              {/* Line Chart */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Performance (7j)</h4>
-                <div className="h-[200px] w-full border border-gray-50 rounded-xl p-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={stats.successOverTime}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis 
-                        dataKey="date" 
-                        tick={{ fontSize: 10, fill: "#94a3b8" }} 
-                        axisLine={false} 
-                        tickLine={false} 
-                      />
-                      <YAxis hide domain={[0, 100]} />
-                      <Tooltip 
-                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '11px' }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="rate"
-                        stroke="#6366f1"
-                        strokeWidth={3}
-                        dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={correctnessByQuestion}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(220, 13%, 91%)"
+                  />
+
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }}
+                    axisLine={{ stroke: "hsl(220, 13%, 91%)" }}
+                    tickLine={false}
+                  />
+
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }}
+                    axisLine={false}
+                    tickLine={false}
+                    domain={[0, 100]}
+                  />
+
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(0, 0%, 100%)",
+                      border: "1px solid hsl(220, 13%, 91%)",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="rate"
+                    stroke="hsl(250, 50%, 55%)"
+                    strokeWidth={2}
+                    dot={{ fill: "hsl(250, 50%, 55%)", strokeWidth: 0, r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Card>
           </div>
-        ) : (
-          <div className="p-10 text-center text-gray-500">Aucune donnée disponible.</div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   )
