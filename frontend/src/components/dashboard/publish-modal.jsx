@@ -1,13 +1,25 @@
-"use client"
+import { useState } from "react"
 
-import React, { useState } from "react"
-import {Dialog,DialogContent,DialogHeader,DialogTitle,} from "../ui_dashboard/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../ui_dashboard/dialog"
+
 import { Button } from "../ui_dashboard/button"
 import { Input } from "../ui_dashboard/input"
 import { Label } from "../ui_dashboard/label"
 import { Badge } from "../ui_dashboard/badge"
 import { Separator } from "../ui_dashboard/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui_dashboard/tabs"
+
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui_dashboard/tabs"
+
 import {
   Globe,
   FileDown,
@@ -29,7 +41,6 @@ export function PublishModal({ qcm, open, onOpenChange }) {
 
   if (!qcm) return null
 
-  // Vérifier si le QCM contient des médias incompatibles avec le PDF
   const hasMultimedia = qcm.questions?.some(
     (q) => q.type === "video" || q.type === "audio"
   )
@@ -41,92 +52,124 @@ export function PublishModal({ qcm, open, onOpenChange }) {
     }
   }
 
-  const removeEmail = (idx) => setEmails(emails.filter((_, i) => i !== idx))
+  const removeEmail = (idx) => {
+    setEmails(emails.filter((_, i) => i !== idx))
+  }
 
   const handleCopyLink = () => {
-    const shareLink = `http://localhost:5173/quiz/${qcm.id}` // Adapté à ton port local
-    navigator.clipboard.writeText(shareLink)
+    navigator.clipboard.writeText(`https://qsm-gen.app/quiz/${qcm.id}`)
     setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+
+    setTimeout(() => {
+      setCopied(false)
+    }, 2000)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg border-gray-200 bg-white p-0 overflow-hidden">
+      <DialogContent className="max-w-lg border-border bg-card p-0">
         <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-bold text-gray-900">
+          <DialogTitle className="font-display text-lg font-bold text-card-foreground">
             Publier : {qcm.title}
           </DialogTitle>
-          <p className="text-sm text-gray-500">
+
+          <p className="text-sm text-muted-foreground">
             Choisissez le mode de publication de votre quiz
           </p>
         </DialogHeader>
 
         <Tabs defaultValue="web" className="mt-4">
-          <TabsList className="mx-6 grid w-[calc(100%-48px)] grid-cols-2 bg-gray-100">
-            <TabsTrigger value="web" className="gap-2 text-sm data-[state=active]:bg-white shadow-sm">
+          <TabsList className="mx-6 grid w-[calc(100%-48px)] grid-cols-2 bg-muted">
+            <TabsTrigger value="web" className="gap-2 text-sm data-[state=active]:bg-card">
               <Globe className="h-4 w-4" />
               Web
             </TabsTrigger>
-            <TabsTrigger value="pdf" className="gap-2 text-sm data-[state=active]:bg-white shadow-sm">
+
+            <TabsTrigger value="pdf" className="gap-2 text-sm data-[state=active]:bg-card">
               <FileDown className="h-4 w-4" />
               PDF
             </TabsTrigger>
           </TabsList>
 
-          {/* Onglet WEB */}
+          {/* WEB TAB */}
           <TabsContent value="web" className="p-6 pt-4">
             <div className="flex flex-col gap-5">
-              {/* Lien de partage */}
+
+              {/* SHARE LINK */}
               <div>
-                <Label className="text-sm font-medium text-gray-700">Lien de partage</Label>
+                <Label className="text-sm text-card-foreground">
+                  Lien de partage
+                </Label>
+
                 <div className="mt-1.5 flex items-center gap-2">
-                  <div className="flex flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                  <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-muted-foreground">
                     <Link2 className="h-4 w-4 shrink-0" />
-                    <span className="truncate">http://localhost:5173/quiz/{qcm.id}</span>
+                    <span className="truncate">
+                      https://qsm-gen.app/quiz/{qcm.id}
+                    </span>
                   </div>
+
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-1.5 border-gray-200"
+                    className="gap-1.5 border-border"
                     onClick={handleCopyLink}
                   >
-                    {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+
                     {copied ? "Copié" : "Copier"}
                   </Button>
                 </div>
               </div>
 
-              {/* QR Code */}
-              <div className="flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white text-gray-400">
-                  <QrCode className="h-10 w-10" />
+              {/* QR CODE */}
+              <div className="flex items-center gap-4 rounded-xl border border-border/50 bg-background p-4">
+                <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-border bg-muted">
+                  <QrCode className="h-10 w-10 text-muted-foreground/60" />
                 </div>
+
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">QR Code</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm font-medium text-card-foreground">
+                    QR Code
+                  </p>
+
+                  <p className="text-xs text-muted-foreground">
                     Scannez ce code pour accéder directement au quiz
                   </p>
-                  <Button variant="link" className="h-auto p-0 text-xs text-indigo-600 font-semibold">
+
+                  <Button variant="link" className="h-auto p-0 text-xs text-primary">
                     Télécharger le QR Code
                   </Button>
                 </div>
               </div>
 
-              <Separator className="bg-gray-100" />
+              <Separator />
 
-              {/* Invitations Email */}
+              {/* EMAIL */}
               <div>
-                <Label className="text-sm font-medium text-gray-700">Inviter par email</Label>
+                <Label className="text-sm text-card-foreground">
+                  Inviter par email
+                </Label>
+
                 <div className="mt-1.5 flex items-center gap-2">
                   <Input
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addEmail()}
                     placeholder="candidat@email.com"
-                    className="flex-1 border-gray-200 text-sm focus:ring-indigo-500"
+                    className="flex-1 border-border bg-background text-sm"
                   />
-                  <Button size="sm" variant="outline" onClick={addEmail} className="gap-1.5 border-gray-200">
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={addEmail}
+                    className="gap-1.5 border-border"
+                  >
                     <Plus className="h-4 w-4" />
                     Ajouter
                   </Button>
@@ -138,10 +181,11 @@ export function PublishModal({ qcm, open, onOpenChange }) {
                       <Badge
                         key={idx}
                         variant="secondary"
-                        className="gap-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-none"
+                        className="gap-1 bg-primary/10 text-primary"
                       >
                         {email}
-                        <button onClick={() => removeEmail(idx)} className="ml-1 hover:text-red-500">
+
+                        <button onClick={() => removeEmail(idx)}>
                           <X className="h-3 w-3" />
                         </button>
                       </Badge>
@@ -150,56 +194,67 @@ export function PublishModal({ qcm, open, onOpenChange }) {
                 )}
               </div>
 
-              <Button className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Button className="gap-2">
                 <Send className="h-4 w-4" />
                 Envoyer les invitations ({emails.length})
               </Button>
+
             </div>
           </TabsContent>
 
-          {/* Onglet PDF */}
+          {/* PDF TAB */}
           <TabsContent value="pdf" className="p-6 pt-4">
             <div className="flex flex-col gap-5">
+
               {hasMultimedia && (
-                <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
-                  <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+                <div className="flex items-start gap-3 rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-4">
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-yellow-500" />
+
                   <div>
-                    <p className="text-sm font-bold">Contenu multimédia détecté</p>
-                    <p className="text-xs opacity-90">
-                      Ce quiz contient des éléments vidéo ou audio. Ils ne seront pas inclus dans le PDF.
+                    <p className="text-sm font-medium text-card-foreground">
+                      Contenu multimédia détecté
+                    </p>
+
+                    <p className="text-xs text-muted-foreground">
+                      Ce quiz contient des éléments vidéo ou audio.
+                      Ces éléments ne seront pas inclus dans le PDF.
                     </p>
                   </div>
                 </div>
               )}
 
               <div>
-                <Label className="text-sm font-medium text-gray-700">Nombre de copies</Label>
+                <Label className="text-sm text-card-foreground">
+                  Nombre de copies
+                </Label>
+
                 <Input
                   type="number"
                   min={1}
                   max={100}
                   value={pdfCopies}
                   onChange={(e) => setPdfCopies(Number(e.target.value))}
-                  className="mt-1.5 w-32 border-gray-200"
+                  className="mt-1.5 w-32 border-border bg-background"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+
+                <p className="mt-1 text-xs text-muted-foreground">
                   Chaque copie aura un ordre de questions aléatoire
                 </p>
               </div>
 
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-sm text-gray-600">
-                  Un fichier <span className="font-bold text-gray-900">ZIP</span> contenant {pdfCopies} PDF(s) sera généré.
+              <div className="rounded-xl border border-border/50 bg-background p-4">
+                <p className="text-sm text-muted-foreground">
+                  Un fichier <span className="font-medium text-card-foreground">ZIP</span>{" "}
+                  contenant {pdfCopies} fichier(s) PDF sera téléchargé,
+                  chacun avec un ordre de questions unique.
                 </p>
               </div>
 
-              <Button 
-                className="w-full gap-2 bg-gray-900 hover:bg-black text-white" 
-                disabled={hasMultimedia}
-              >
+              <Button className="gap-2" disabled={hasMultimedia}>
                 <FileDown className="h-4 w-4" />
-                Générer les PDF
+                Générer {pdfCopies} PDF
               </Button>
+
             </div>
           </TabsContent>
         </Tabs>

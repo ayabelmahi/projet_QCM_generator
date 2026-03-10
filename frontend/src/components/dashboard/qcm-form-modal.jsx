@@ -1,7 +1,10 @@
-"use client"
-
-import React, { useState, useEffect } from "react"
-import {Dialog,DialogContent,DialogHeader,DialogTitle,} from "../ui_dashboard/dialog"
+import { useState, useEffect } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../ui_dashboard/dialog"
 import { Button } from "../ui_dashboard/button"
 import { Input } from "../ui_dashboard/input"
 import { Label } from "../ui_dashboard/label"
@@ -18,24 +21,29 @@ import {
 } from "../ui_dashboard/select"
 import { Plus, Trash2, GripVertical, Image, Video, Music, Type } from "lucide-react"
 
-// Données de secours si l'import mock-data échoue
-const SUBJECTS_LIST = ["Informatique", "Mathématiques", "Français", "Histoire", "Sciences", "Anglais"]
+const subjects = [
+  "Informatique",
+  "Mathématiques",
+  "Français",
+  "Histoire",
+  "Sciences",
+  "Anglais",
+]
 
-const generateId = (prefix) => `${prefix}-${Math.random().toString(36).slice(2, 9)}`
-const createDefaultQuestion = () => ({
-  id: generateId('q'),
+const defaultQuestion = () => ({
+  id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
   type: "text",
   content: "",
   choices: [
-    { id: generateId('c'), text: "", isCorrect: false },
-    { id: generateId('c'), text: "", isCorrect: false },
+    { id: `c-${Date.now()}-1`, text: "", isCorrect: false },
+    { id: `c-${Date.now()}-2`, text: "", isCorrect: false },
   ],
 })
 
 const typeOptions = [
   { value: "text", label: "Texte", icon: Type },
   { value: "image", label: "Image", icon: Image },
-  { value: "video", label: "Vidéo", icon: Video },
+  { value: "video", label: "Video", icon: Video },
   { value: "audio", label: "Audio", icon: Music },
 ]
 
@@ -46,7 +54,7 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
   const [hasTimer, setHasTimer] = useState(false)
   const [timer, setTimer] = useState(30)
   const [successRate, setSuccessRate] = useState(50)
-  const [questions, setQuestions] = useState([createDefaultQuestion()])
+  const [questions, setQuestions] = useState([defaultQuestion()])
 
   useEffect(() => {
     if (qcm && open) {
@@ -56,7 +64,7 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
       setHasTimer(!!qcm.timer)
       setTimer(qcm.timer || 30)
       setSuccessRate(qcm.successRate || 50)
-      setQuestions(qcm.questions?.length > 0 ? qcm.questions : [createDefaultQuestion()])
+      setQuestions(qcm.questions?.length > 0 ? qcm.questions : [defaultQuestion()])
     } else if (open) {
       setTitle("")
       setSubject("")
@@ -64,13 +72,14 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
       setHasTimer(false)
       setTimer(30)
       setSuccessRate(50)
-      setQuestions([createDefaultQuestion()])
+      setQuestions([defaultQuestion()])
     }
   }, [qcm, open])
 
-  // --- Handlers Questions ---
-  const addQuestion = () => setQuestions([...questions, createDefaultQuestion()])
-  
+  const addQuestion = () => {
+    setQuestions([...questions, defaultQuestion()])
+  }
+
   const removeQuestion = (idx) => {
     if (questions.length > 1) {
       setQuestions(questions.filter((_, i) => i !== idx))
@@ -78,18 +87,20 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
   }
 
   const updateQuestion = (idx, updates) => {
-    const newQuestions = [...questions]
-    newQuestions[idx] = { ...newQuestions[idx], ...updates }
-    setQuestions(newQuestions)
+    setQuestions(questions.map((q, i) => (i === idx ? { ...q, ...updates } : q)))
   }
 
-  // --- Handlers Choix ---
   const addChoice = (qIdx) => {
-    const newChoice = { id: generateId('c'), text: "", isCorrect: false }
+    const newChoice = {
+      id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      text: "",
+      isCorrect: false,
+    }
+
     const updated = [...questions]
-    updated[qIdx] = { 
-      ...updated[qIdx], 
-      choices: [...updated[qIdx].choices, newChoice] 
+    updated[qIdx] = {
+      ...updated[qIdx],
+      choices: [...updated[qIdx].choices, newChoice],
     }
     setQuestions(updated)
   }
@@ -107,15 +118,18 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
 
   const updateChoice = (qIdx, cIdx, updates) => {
     const updated = [...questions]
-    const updatedChoices = [...updated[qIdx].choices]
-    updatedChoices[cIdx] = { ...updatedChoices[cIdx], ...updates }
-    updated[qIdx] = { ...updated[qIdx], choices: updatedChoices }
+    updated[qIdx] = {
+      ...updated[qIdx],
+      choices: updated[qIdx].choices.map((c, i) =>
+        i === cIdx ? { ...c, ...updates } : c
+      ),
+    }
     setQuestions(updated)
   }
 
   const handleSave = () => {
     onSave({
-      ...(qcm?.id ? { id: qcm.id } : {}),
+      ...(qcm ? { id: qcm.id } : {}),
       title,
       subject,
       versionsCount,
@@ -130,125 +144,138 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl border-gray-200 bg-white p-0 overflow-hidden shadow-2xl">
+      <DialogContent className="max-w-3xl border-border bg-card p-0">
         <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-bold text-gray-900">
-            {qcm ? "Modifier le Quiz" : "Créer un nouveau Quiz"}
+          <DialogTitle className="font-display text-lg font-bold text-card-foreground">
+            {qcm ? "Modifier le Quiz" : "Creer un nouveau Quiz"}
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[75vh]">
-          <div className="flex flex-col gap-8 p-6">
-            
-            {/* 1. Informations Générales */}
-            <section className="rounded-2xl border border-gray-100 bg-gray-50/50 p-6">
-              <h3 className="mb-5 text-xs font-bold uppercase tracking-widest text-indigo-600">
-                Informations générales
+        <ScrollArea className="max-h-[70vh]">
+          <div className="flex flex-col gap-6 p-6">
+            <section className="rounded-xl border border-border/50 bg-background p-5">
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Informations generales
               </h3>
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <Label className="text-sm font-semibold text-gray-700">Titre du Quiz</Label>
+                  <Label className="text-sm text-card-foreground">Titre du Quiz</Label>
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Ex: Architecture des ordinateurs - Examen Final"
-                    className="mt-2 border-gray-200 bg-white focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Ex: Mathematiques - Algebre Lineaire"
+                    className="mt-1.5 border-border bg-card"
                   />
                 </div>
+
                 <div>
-                  <Label className="text-sm font-semibold text-gray-700">Sujet / Matière</Label>
+                  <Label className="text-sm text-card-foreground">Sujet</Label>
                   <Select value={subject} onValueChange={setSubject}>
-                    <SelectTrigger className="mt-2 border-gray-200 bg-white">
+                    <SelectTrigger className="mt-1.5 border-border bg-card">
                       <SelectValue placeholder="Choisir un sujet" />
                     </SelectTrigger>
                     <SelectContent>
-                      {SUBJECTS_LIST.map((s) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      {subjects.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div>
-                  <Label className="text-sm font-semibold text-gray-700">Taux de réussite (%)</Label>
-                  <Input
-                    type="number"
-                    value={successRate}
-                    onChange={(e) => setSuccessRate(Number(e.target.value))}
-                    className="mt-2 border-gray-200 bg-white"
-                  />
-                </div>
-                <div className="flex flex-col justify-center gap-3 rounded-lg border border-dashed border-gray-200 p-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-semibold text-gray-700">Activer un Timer</Label>
-                    <Switch checked={hasTimer} onCheckedChange={setHasTimer} />
-                  </div>
-                  {hasTimer && (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        value={timer}
-                        onChange={(e) => setTimer(Number(e.target.value))}
-                        className="h-8 border-gray-200 bg-white"
-                      />
-                      <span className="text-xs text-gray-500">minutes</span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label className="text-sm font-semibold text-gray-700">Versions (aléatoire)</Label>
+                  <Label className="text-sm text-card-foreground">Nombre de versions</Label>
                   <Input
                     type="number"
                     min={1}
                     max={10}
                     value={versionsCount}
                     onChange={(e) => setVersionsCount(Number(e.target.value))}
-                    className="mt-2 border-gray-200 bg-white"
+                    className="mt-1.5 border-border bg-card"
                   />
+                </div>
+
+                <div>
+                  <Label className="text-sm text-card-foreground">Taux de reussite (%)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={successRate}
+                    onChange={(e) => setSuccessRate(Number(e.target.value))}
+                    className="mt-1.5 border-border bg-card"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm text-card-foreground">Timer</Label>
+                    <Switch checked={hasTimer} onCheckedChange={setHasTimer} />
+                  </div>
+
+                  {hasTimer && (
+                    <Input
+                      type="number"
+                      min={1}
+                      value={timer}
+                      onChange={(e) => setTimer(Number(e.target.value))}
+                      placeholder="Duree en minutes"
+                      className="mt-1.5 border-border bg-card"
+                    />
+                  )}
                 </div>
               </div>
             </section>
 
-            {/* 2. Builder de Questions */}
             <section>
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-600">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                   Questions ({questions.length})
                 </h3>
-                <Button size="sm" onClick={addQuestion} className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={addQuestion}
+                  className="gap-1.5 border-border text-sm"
+                >
                   <Plus className="h-4 w-4" />
                   Ajouter une question
                 </Button>
               </div>
 
-              <div className="space-y-6">
+              <div className="flex flex-col gap-4">
                 {questions.map((question, qIdx) => (
                   <div
                     key={question.id}
-                    className="group relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:border-indigo-200"
+                    className="rounded-xl border border-border/50 bg-background p-5 transition-shadow hover:shadow-sm"
                   >
                     <div className="mb-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <GripVertical className="h-4 w-4 cursor-grab text-gray-300" />
-                        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-100 text-xs font-bold text-indigo-600">
+                      <div className="flex items-center gap-2">
+                        <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground/50" />
+                        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
                           {qIdx + 1}
                         </span>
-                        <h4 className="text-sm font-bold text-gray-900">Question {qIdx + 1}</h4>
+                        <h4 className="text-sm font-medium text-card-foreground">
+                          Question {qIdx + 1}
+                        </h4>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
-                        {/* Sélecteur de Type (Tabs style) */}
-                        <div className="flex items-center rounded-lg border border-gray-100 bg-gray-50 p-1">
+                        <div className="flex items-center rounded-lg border border-border bg-card">
                           {typeOptions.map((opt) => {
                             const Icon = opt.icon
-                            const isActive = question.type === opt.value
                             return (
                               <button
                                 key={opt.value}
+                                type="button"
                                 onClick={() => updateQuestion(qIdx, { type: opt.value })}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all rounded-md ${
-                                  isActive 
-                                    ? "bg-white text-indigo-600 shadow-sm" 
-                                    : "text-gray-500 hover:text-gray-700"
+                                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs transition-colors first:rounded-l-lg last:rounded-r-lg ${
+                                  question.type === opt.value
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:text-foreground"
                                 }`}
                               >
                                 <Icon className="h-3.5 w-3.5" />
@@ -257,11 +284,11 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
                             )
                           })}
                         </div>
-                        
+
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
                           onClick={() => removeQuestion(qIdx)}
                           disabled={questions.length <= 1}
                         >
@@ -272,58 +299,67 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
 
                     <Input
                       value={question.content}
-                      onChange={(e) => updateQuestion(qIdx, { content: e.target.value })}
-                      placeholder="Intitulé de la question..."
-                      className="mb-6 border-gray-200 text-base font-medium placeholder:font-normal focus:ring-indigo-500"
+                      onChange={(e) =>
+                        updateQuestion(qIdx, { content: e.target.value })
+                      }
+                      placeholder="Saisissez votre question..."
+                      className="mb-4 border-border bg-card"
                     />
 
-                    {/* Zone d'Upload simulée si non-texte */}
                     {question.type !== "text" && (
-                      <div className="mb-6 flex h-24 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 text-gray-500 transition-colors hover:bg-gray-100">
-                        <Plus className="h-6 w-6 opacity-50" />
-                        <span className="text-xs font-medium">Ajouter un fichier {question.type}</span>
+                      <div className="mb-4 flex h-20 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/30 text-sm text-muted-foreground">
+                        Glissez-deposez ou cliquez pour ajouter un fichier{" "}
+                        {
+                          typeOptions.find((t) => t.value === question.type)?.label.toLowerCase()
+                        }
                       </div>
                     )}
 
-                    {/* Réponses */}
-                    <div className="space-y-3">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Réponses possibles</p>
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs font-medium text-muted-foreground">
+                        Choix de reponse
+                      </Label>
+
                       {question.choices.map((choice, cIdx) => (
-                        <div key={choice.id} className="flex items-center gap-3">
+                        <div key={choice.id} className="flex items-center gap-2">
                           <Checkbox
                             checked={choice.isCorrect}
                             onCheckedChange={(checked) =>
-                              updateChoice(qIdx, cIdx, { isCorrect: checked === true })
+                              updateChoice(qIdx, cIdx, {
+                                isCorrect: checked === true,
+                              })
                             }
-                            className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                            className="data-[state=checked]:bg-[hsl(142,71%,45%)] data-[state=checked]:border-[hsl(142,71%,45%)]"
                           />
+
                           <Input
                             value={choice.text}
-                            onChange={(e) => updateChoice(qIdx, cIdx, { text: e.target.value })}
-                            placeholder={`Réponse ${cIdx + 1}`}
-                            className={`flex-1 border-gray-100 text-sm transition-all focus:border-indigo-300 ${
-                              choice.isCorrect ? "bg-green-50/50 border-green-200" : "bg-white"
-                            }`}
+                            onChange={(e) =>
+                              updateChoice(qIdx, cIdx, { text: e.target.value })
+                            }
+                            placeholder={`Choix ${cIdx + 1}`}
+                            className="flex-1 border-border bg-card text-sm"
                           />
+
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
                             onClick={() => removeChoice(qIdx, cIdx)}
                             disabled={question.choices.length <= 2}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       ))}
-                      
+
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => addChoice(qIdx)}
-                        className="mt-2 h-8 px-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
+                        className="mt-1 w-fit gap-1.5 text-xs text-muted-foreground hover:text-primary"
                       >
-                        <Plus className="mr-1 h-3.5 w-3.5" />
+                        <Plus className="h-3.5 w-3.5" />
                         Ajouter un choix
                       </Button>
                     </div>
@@ -334,17 +370,19 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
           </div>
         </ScrollArea>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/50 p-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-gray-200 text-gray-600 hover:bg-white">
+        <Separator />
+
+        <div className="flex items-center justify-end gap-3 p-4">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-border"
+          >
             Annuler
           </Button>
-          <Button 
-            onClick={handleSave} 
-            disabled={!title || !subject}
-            className="bg-gray-900 px-8 text-white hover:bg-black disabled:opacity-50"
-          >
-            {qcm ? "Enregistrer les modifications" : "Créer le Quiz"}
+
+          <Button onClick={handleSave} disabled={!title || !subject}>
+            {qcm ? "Enregistrer" : "Creer le Quiz"}
           </Button>
         </div>
       </DialogContent>
