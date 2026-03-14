@@ -1,26 +1,46 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+// Import des Providers et UI
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
+
+// Import de tes pages
+import Index from "./pages/Index";
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
 
 function App() {
     return (
-        
-            <Routes>
-                {/* Par défaut, on arrive sur le Login */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
+        <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
 
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                    <Routes>
+                        {/* Landing Page */}
+                        <Route path="/" element={<Index />} />
 
+                        {/* Authentification */}
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
 
-                {/* On ajoutera le Dashboard ici plus tard */}
-            </Routes>
-        
-    )
+                        {/* Dashboard */}
+                        <Route path="/dashboard" element={<Dashboard />} />
+
+                        {/* Erreur 404 */}
+                        <Route path="*" element={<NotFound />} />
+                    </Routes>
+
+                <Toaster />
+                <Sonner />
+            </TooltipProvider>
+        </QueryClientProvider>
+    );
 }
 
-export default App
+export default App;
