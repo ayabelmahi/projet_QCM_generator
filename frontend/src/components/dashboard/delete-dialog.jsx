@@ -1,45 +1,55 @@
-"use client"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui_dashboard/alert-dialog"
 
-import React from "react"
-import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle,} from "../ui_dashboard/alert-dialog"
 import { AlertTriangle } from "lucide-react"
 
 export function DeleteDialog({ qcm, open, onOpenChange, onConfirm }) {
-  // Si aucun QCM n'est sélectionné, on n'affiche rien
   if (!qcm) return null
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="border-gray-200 bg-white">
+      <AlertDialogContent className="border-border bg-card">
         <AlertDialogHeader>
-          {/* Icône d'avertissement visuelle */}
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+            <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
-          
-          <AlertDialogTitle className="text-center font-bold text-gray-900">
+
+          <AlertDialogTitle className="text-center font-display text-card-foreground">
             Supprimer ce quiz ?
           </AlertDialogTitle>
-          
-          <AlertDialogDescription className="text-center text-gray-500">
-            Vous êtes sur le point de supprimer{" "}
-            <span className="font-semibold text-gray-900">{qcm.title}</span>.
-            <br />
-            Cette action est irréversible et toutes les données associées seront perdues.
+
+          <AlertDialogDescription className="text-center">
+            Vous etes sur le point de supprimer{" "}
+            <span className="font-medium text-card-foreground">
+              {qcm.title}
+            </span>.
+            Cette action est irreversible et toutes les donnees associees seront perdues.
           </AlertDialogDescription>
+
         </AlertDialogHeader>
 
-        <AlertDialogFooter className="sm:justify-center gap-2">
-          <AlertDialogCancel className="border-gray-200 text-gray-700 hover:bg-gray-50">
+        <AlertDialogFooter className="sm:justify-center">
+
+          <AlertDialogCancel className="border-border">
             Annuler
           </AlertDialogCancel>
-          
+
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-red-600 text-white hover:bg-red-700 border-none"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Supprimer définitivement
+            Supprimer definitivement
           </AlertDialogAction>
+
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

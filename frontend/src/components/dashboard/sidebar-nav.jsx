@@ -1,127 +1,91 @@
-import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   FileText,
-  BarChart3,
-  Settings,
   PlusCircle,
-  ChevronRight,
-  Loader2,
-  Database,
-} from "lucide-react";
+  BarChart3,
+  TrendingUp,
+  Settings,
+  LogOut,
+  GraduationCap,
+} from "lucide-react"
 
-import { cn } from "../../lib_dashboard/utils";
-import { Badge } from "../ui_dashboard/badge";
-import { Button } from "../ui_dashboard/button";
+import { cn } from "../../lib_dashboard/utils"
 
-export function SidebarNav() {
-  const { pathname } = useLocation();
-  const [stats, setStats] = useState({ total: 0, drafts: 0 });
-  const [loading, setLoading] = useState(true);
+const navItems = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "quizzes", label: "Mes Quiz", icon: FileText },
+  // { id: "create", label: "Creer un Quiz", icon: PlusCircle },
+   { id: "results", label: "Resultats", icon: BarChart3 },
+  { id: "statistics", label: "Statistiques", icon: TrendingUp },
+  // { id: "settings", label: "Parametres", icon: Settings },
+]
 
-  useEffect(() => {
-    const fetchSidebarStats = async () => {
-      try {
-        // Exemple plus tard:
-        // const response = await fetch('/api/quizzes/stats-summary')
-        // const data = await response.json()
-        // setStats({ total: data.total, drafts: data.drafts })
-
-        setStats({ total: 12, drafts: 3 }); // simulation
-      } catch (error) {
-        console.error("Erreur stats sidebar:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSidebarStats();
-  }, []);
-
-  const routes = [
-    { label: "Tableau de bord", icon: LayoutDashboard, href: "/dashboard", color: "text-indigo-500" },
-    { label: "Mes Quiz", icon: FileText, href: "/dashboard/quizzes", color: "text-blue-500", count: stats.total },
-    { label: "Statistiques", icon: BarChart3, href: "/dashboard/stats", color: "text-emerald-500" },
-    { label: "Banque de Questions", icon: Database, href: "/dashboard/questions", color: "text-amber-500" },
-    { label: "Paramètres", icon: Settings, href: "/dashboard/settings" },
-  ];
-
+export function SidebarNav({ activePage, onNavigate }) {
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200 w-64">
-      <div className="p-6">
-        <div className="flex items-center gap-2 px-2 mb-8">
-          <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <span className="text-white font-bold text-xl">Q</span>
-          </div>
-          <span className="font-bold text-xl tracking-tight text-gray-900">QuizApp</span>
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col bg-sidebar text-sidebar-foreground">
+      <div className="flex items-center gap-3 px-6 py-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
+          <GraduationCap className="h-5 w-5 text-sidebar-primary-foreground" />
         </div>
 
-        <div className="space-y-1">
-          {routes.map((route) => {
-            const isActive = pathname === route.href;
+        <div>
+          <h1 className="font-display text-base font-bold tracking-tight text-sidebar-primary-foreground">
+            QSM Generator
+          </h1>
+          <p className="text-xs text-sidebar-foreground/50">Quiz Platform</p>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-3 py-4">
+        <ul className="flex flex-col gap-1">
+          {navItems.map((item) => {
+            const isActive = activePage === item.id
 
             return (
-              <Link
-                key={route.href}
-                to={route.href}
-                className={cn(
-                  "group flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200",
-                  isActive
-                    ? "bg-indigo-50 text-indigo-700 shadow-sm"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-                )}
-              >
-                <div className="flex items-center flex-1">
-                  <route.icon
-                    className={cn(
-                      "h-5 w-5 mr-3 transition-colors",
-                      isActive ? "text-indigo-600" : route.color || "text-gray-400"
-                    )}
-                  />
-                  {route.label}
-                </div>
-
-                {route.count !== undefined && (
-                  loading ? (
-                    <Loader2 className="h-3 w-3 animate-spin text-gray-300" />
-                  ) : (
-                    <Badge
-                      className={cn(
-                        "ml-auto text-[10px] px-1.5 h-5 min-w-[20px] justify-center border-none shadow-none",
-                        isActive ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600"
-                      )}
-                    >
-                      {route.count}
-                    </Badge>
-                  )
-                )}
-
-                {isActive && (
-                  <ChevronRight className="h-4 w-4 ml-2 text-indigo-400 lg:block hidden" />
-                )}
-              </Link>
-            );
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => onNavigate(item.id)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    isActive
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md shadow-sidebar-primary/25"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  )}
+                >
+                  <item.icon className="h-[18px] w-[18px]" />
+                  {item.label}
+                </button>
+              </li>
+            )
           })}
+        </ul>
+      </nav>
+
+      <div className="border-t border-sidebar-border px-3 py-4">
+        <div className="mb-3 flex items-center gap-3 rounded-lg px-3 py-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
+            PA
+          </div>
+
+          <div className="flex-1">
+            <p className="text-sm font-medium text-sidebar-primary-foreground">
+              Prof. Ahmed
+            </p>
+            <p className="text-xs text-sidebar-foreground/50">
+              ahmed@university.ma
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-auto p-4 border-t border-gray-100 bg-gray-50/50">
-        <Button
-          className="w-full justify-start gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-indigo-600 hover:text-white transition-all rounded-xl shadow-sm h-10 group"
-          asChild
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
         >
-          <Link to="/dashboard/quizzes/new">
-            <PlusCircle className="h-4 w-4 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-semibold uppercase tracking-wider">Nouveau Quiz</span>
-          </Link>
-        </Button>
-
-        {stats.drafts > 0 && (
-          <p className="text-[10px] text-center mt-3 text-amber-600 font-medium animate-pulse">
-            Vous avez {stats.drafts} brouillon{stats.drafts > 1 ? "s" : ""} en attente
-          </p>
-        )}
+          <LogOut className="h-4 w-4" />
+          Deconnexion
+        </button>
       </div>
-    </div>
-  );
+    </aside>
+  )
 }

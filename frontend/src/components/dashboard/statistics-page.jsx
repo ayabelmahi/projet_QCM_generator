@@ -1,8 +1,7 @@
-"use client"
-
-import React, { useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { Card } from "../ui_dashboard/card"
 import { Progress } from "../ui_dashboard/progress"
+
 import {
   Select,
   SelectContent,
@@ -10,14 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui_dashboard/select"
-import { 
-  Send, 
-  CheckCircle2, 
-  TrendingUp, 
-  Target, 
-  Loader2,
-  AlertCircle 
-} from "lucide-react"
+
+import { Send, CheckCircle2, TrendingUp, Target } from "lucide-react"
+
 import {
   BarChart,
   Bar,
@@ -31,121 +25,150 @@ import {
 } from "recharts"
 
 export function StatisticsPage({ quizzes = [] }) {
-  const [selectedQuiz, setSelectedQuiz] = useState("all")
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [selectedQuizId, setSelectedQuizId] = useState("all")
 
-  // Adaptation API : Récupération des statistiques depuis Symfony
-  useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true)
-      try {
-        // Construction de l'URL (Ex: /api/stats ou /api/stats?quizId=123)
-        const url = selectedQuiz === "all" 
-          ? "/api/statistics/global" 
-          : `/api/statistics/quiz/${selectedQuiz}`;
-        
-        // Remplace par ton appel fetch réel :
-        // const response = await fetch(url);
-        // const data = await response.json();
-        
-        // Simulation de délais API et data
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockData = {
-          invitationsSent: 150,
-          completedAttempts: 124,
-          successRate: 78,
-          averageScore: 65,
-          scoreDistribution: [
-            { range: "0-20", count: 5 },
-            { range: "20-40", count: 15 },
-            { range: "40-60", count: 30 },
-            { range: "60-80", count: 45 },
-            { range: "80-100", count: 29 },
-          ],
-          successOverTime: [
-            { date: "Jan", rate: 65 },
-            { date: "Fév", rate: 68 },
-            { date: "Mar", rate: 75 },
-            { date: "Avr", rate: 72 },
-            { date: "Mai", rate: 78 },
-          ]
-        };
-        
-        setStats(mockData);
-        setError(null);
-      } catch (err) {
-        setError("Impossible de charger les statistiques.");
-        console.error(err);
-      } finally {
-        setLoading(false)
-      }
-    }
+  const publishedQuizzes = useMemo(
+    () => quizzes.filter((q) => q.status === "published"),
+    [quizzes]
+  )
 
-    fetchStats()
-  }, [selectedQuiz])
+  const filteredQuizzes = useMemo(() => {
+    if (selectedQuizId === "all") return quizzes
+    return quizzes.filter((q) => String(q.id) === selectedQuizId)
+  }, [quizzes, selectedQuizId])
 
-  if (loading && !stats) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-      </div>
-    )
-  }
+  const totalQuizzes = filteredQuizzes.length
 
-  if (error) {
-    return (
-      <Card className="flex flex-col items-center justify-center p-12 border-red-100 bg-red-50">
-        <AlertCircle className="h-10 w-10 text-red-500 mb-4" />
-        <p className="text-red-800 font-medium">{error}</p>
-      </Card>
-    )
-  }
+  const publishedCount = filteredQuizzes.filter(
+    (q) => q.status === "published"
+  ).length
 
-  const completionRate = stats ? Math.round((stats.completedAttempts / stats.invitationsSent) * 100) : 0
+  const avgSuccessRate =
+    filteredQuizzes.length > 0
+      ? Math.round(
+          filteredQuizzes.reduce((acc, q) => acc + (q.successRate || 0), 0) /
+            filteredQuizzes.length
+        )
+      : 0
+
+  const timedQuizzes = filteredQuizzes.filter((q) => q.timer)
+  const avgTimer =
+    timedQuizzes.length > 0
+      ? Math.round(
+          timedQuizzes.reduce((acc, q) => acc + (q.timer || 0), 0) /
+            timedQuizzes.length
+        )
+      : 0
+
+  const publicationRate =
+    totalQuizzes > 0 ? Math.round((publishedCount / totalQuizzes) * 100) : 0
+
+  const subjectDistribution = useMemo(() => {
+    const map = {}
+
+    filteredQuizzes.forEach((q) => {
+      const subject = q.subject || "Sans sujet"
+      map[subject] = (map[subject] || 0) + 1
+    })
+
+    return Object.entries(map).map(([subject, count]) => ({
+      subject,
+      count,
+    }))
+  }, [filteredQuizzes])
+
+  const successOverTime = useMemo(() => {
+    return [...filteredQuizzes]
+      .filter((q) => q.createdAt)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      .map((q) => ({
+        date: new Date(q.createdAt).toLocaleDateString("fr-FR", {
+          month: "short",
+          year: "2-digit",
+        }),
+        rate: q.successRate || 0,
+      }))
+  }, [filteredQuizzes])
 
   const kpis = [
-    { label: "Invitations envoyées", value: stats.invitationsSent, icon: Send, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Tentatives terminées", value: stats.completedAttempts, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
-    { label: "Taux de réussite", value: `${stats.successRate}%`, icon: TrendingUp, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { label: "Score moyen", value: `${stats.averageScore}%`, icon: Target, color: "text-amber-600", bg: "bg-amber-50" },
+    {
+      label: "Quiz total",
+      value: totalQuizzes,
+      icon: Send,
+      color: "text-primary",
+      bg: "bg-primary/10",
+    },
+    {
+      label: "Quiz publies",
+      value: publishedCount,
+      icon: CheckCircle2,
+      color: "text-[hsl(142,71%,45%)]",
+      bg: "bg-[hsl(142,71%,45%)]/10",
+    },
+    {
+      label: "Taux requis moyen",
+      value: `${avgSuccessRate}%`,
+      icon: TrendingUp,
+      color: "text-[hsl(250,50%,55%)]",
+      bg: "bg-[hsl(250,50%,55%)]/10",
+    },
+    {
+      label: "Temps moyen",
+      value: `${avgTimer} min`,
+      icon: Target,
+      color: "text-[hsl(38,92%,50%)]",
+      bg: "bg-[hsl(38,92%,50%)]/10",
+    },
   ]
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-      {/* Header & Selector */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 tracking-tight">Analyse de Performance</h3>
-          <p className="text-sm text-gray-500">Visualisez l'impact et les résultats de vos évaluations.</p>
+          <h3 className="font-display text-lg font-bold text-foreground">
+            Vue d'ensemble
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Statistiques basees sur les QCM recuperes depuis l'API
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          {loading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
-          <Select value={selectedQuiz} onValueChange={setSelectedQuiz}>
-            <SelectTrigger className="w-64 border-gray-200 bg-white shadow-sm focus:ring-indigo-500">
-              <SelectValue placeholder="Sélectionner un quiz" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les quiz (Global)</SelectItem>
-              {quizzes.filter(q => q.status === "published").map((q) => (
-                <SelectItem key={q.id} value={q.id.toString()}>{q.title}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+
+        <Select value={selectedQuizId} onValueChange={setSelectedQuizId}>
+          <SelectTrigger className="w-60 border-border bg-card">
+            <SelectValue placeholder="Selectionner un quiz" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="all">Tous les quiz</SelectItem>
+
+            {publishedQuizzes.map((q) => (
+              <SelectItem key={q.id} value={String(q.id)}>
+                {q.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.label} className="border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+          <Card
+            key={kpi.label}
+            className="group border-border/50 bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+          >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-400">{kpi.label}</p>
-                <p className="mt-2 text-2xl font-bold text-gray-900">{kpi.value}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {kpi.label}
+                </p>
+                <p className="mt-1 font-display text-2xl font-bold text-card-foreground">
+                  {kpi.value}
+                </p>
               </div>
-              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${kpi.bg}`}>
+
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-xl ${kpi.bg}`}
+              >
                 <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
               </div>
             </div>
@@ -153,82 +176,115 @@ export function StatisticsPage({ quizzes = [] }) {
         ))}
       </div>
 
-      {/* Completion Progress */}
-      <Card className="border-gray-100 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
+      <Card className="border-border/50 bg-card p-6 shadow-sm">
+        <div className="mb-3 flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-bold text-gray-900">Taux de complétion</h4>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Progression des candidats invités vers la fin du test.
+            <h4 className="text-sm font-semibold text-card-foreground">
+              Taux de publication
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              {publishedCount} sur {totalQuizzes} quiz sont publies
             </p>
           </div>
-          <span className="text-2xl font-black text-indigo-600">{completionRate}%</span>
+
+          <span className="font-display text-2xl font-bold text-primary">
+            {publicationRate}%
+          </span>
         </div>
-        <Progress value={completionRate} className="h-2 bg-gray-100" indicatorClassName="bg-indigo-600" />
+
+        <Progress value={publicationRate} className="h-3" />
       </Card>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Score Distribution Chart */}
-        <Card className="border-gray-100 bg-white p-6 shadow-sm">
-          <div className="mb-6">
-            <h4 className="text-sm font-bold text-gray-900">Distribution des scores</h4>
-            <p className="text-xs text-gray-500">Volume de candidats par tranche de note.</p>
-          </div>
+        <Card className="border-border/50 bg-card p-6 shadow-sm">
+          <h4 className="mb-1 text-sm font-semibold text-card-foreground">
+            Repartition par sujet
+          </h4>
+
+          <p className="mb-5 text-xs text-muted-foreground">
+            Nombre de quiz par sujet
+          </p>
+
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={stats.scoreDistribution}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="range" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fontSize: 11, fill: '#94a3b8'}}
+            <BarChart data={subjectDistribution}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="hsl(220, 13%, 91%)"
               />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fontSize: 11, fill: '#94a3b8'}}
+              <XAxis
+                dataKey="subject"
+                tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }}
+                axisLine={{ stroke: "hsl(220, 13%, 91%)" }}
+                tickLine={false}
               />
-              <Tooltip 
-                cursor={{fill: '#f8fafc'}}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              <YAxis
+                tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }}
+                axisLine={false}
+                tickLine={false}
               />
-              <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} barSize={40} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(0, 0%, 100%)",
+                  border: "1px solid hsl(220, 13%, 91%)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+              />
+              <Bar
+                dataKey="count"
+                fill="hsl(221, 83%, 53%)"
+                radius={[6, 6, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </Card>
 
-        {/* Success Over Time Chart */}
-        <Card className="border-gray-100 bg-white p-6 shadow-sm">
-          <div className="mb-6">
-            <h4 className="text-sm font-bold text-gray-900">Évolution du taux de réussite</h4>
-            <p className="text-xs text-gray-500">Performance moyenne sur les 5 derniers mois.</p>
-          </div>
+        <Card className="border-border/50 bg-card p-6 shadow-sm">
+          <h4 className="mb-1 text-sm font-semibold text-card-foreground">
+            Evolution du taux requis
+          </h4>
+
+          <p className="mb-5 text-xs text-muted-foreground">
+            Selon les dates de creation des quiz
+          </p>
+
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={stats.successOverTime}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="date" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fontSize: 11, fill: '#94a3b8'}}
+            <LineChart data={successOverTime}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="hsl(220, 13%, 91%)"
               />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fontSize: 11, fill: '#94a3b8'}}
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }}
+                axisLine={{ stroke: "hsl(220, 13%, 91%)" }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }}
+                axisLine={false}
+                tickLine={false}
                 domain={[0, 100]}
               />
-              <Tooltip 
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(0, 0%, 100%)",
+                  border: "1px solid hsl(220, 13%, 91%)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
               />
               <Line
                 type="monotone"
                 dataKey="rate"
-                stroke="#4f46e5"
-                strokeWidth={3}
-                dot={{ r: 4, fill: "#4f46e5", strokeWidth: 2, stroke: "#fff" }}
-                activeDot={{ r: 6, strokeWidth: 0 }}
+                stroke="hsl(250, 50%, 55%)"
+                strokeWidth={2.5}
+                dot={{ fill: "hsl(250, 50%, 55%)", strokeWidth: 0, r: 5 }}
+                activeDot={{
+                  r: 7,
+                  strokeWidth: 2,
+                  stroke: "hsl(0, 0%, 100%)",
+                }}
               />
             </LineChart>
           </ResponsiveContainer>
