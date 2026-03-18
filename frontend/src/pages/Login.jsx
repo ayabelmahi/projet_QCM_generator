@@ -1,35 +1,34 @@
 import React, { useState } from 'react';
 import { Mail, Lock, LogIn, GraduationCap } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Login = () => {
-    // 1. États pour capturer les identifiants
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-
     const navigate = useNavigate();
 
-    // 2. Fonction de connexion
+    // ✅ Déjà connecté → redirige directement vers le dashboard
+    const token = localStorage.getItem('token');
+    if (token) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
         try {
-            // Sur Symfony avec LexikJWTBundle, la route est souvent /api/login_check
             const response = await axios.post('http://localhost:8090/api/login_check', {
-                email: email, // ou 'username' selon ta config security.yaml
+                email: email,
                 password: password
             });
 
             if (response.data.token) {
-                // 3. Stocker le token pour les prochaines requêtes
                 localStorage.setItem('token', response.data.token);
-
-                // Redirection vers le dashboard
                 navigate('/dashboard');
             }
         } catch (err) {

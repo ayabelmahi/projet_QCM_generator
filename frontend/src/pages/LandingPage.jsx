@@ -4,13 +4,33 @@ import {
     BarChart3,
     Users,
     ArrowRight,
-    CheckCircle2,
     Menu,
     X,
 } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom"; // IMPORT INDISPENSABLE
+import { Link, useNavigate } from "react-router-dom";
 import dashboardMockup from "../assets/dashboard-mockup.png";
+
+// ✅ Bouton intelligent : dashboard si connecté, sinon register
+const SmartCTAButton = ({ className, label = "Commencer gratuitement" }) => {
+    const navigate = useNavigate();
+
+    const handleClick = () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            navigate('/dashboard');
+        } else {
+            navigate('/register');
+        }
+    };
+
+    return (
+        <button onClick={handleClick} className={className}>
+            {label}
+            <ArrowRight className="h-4 w-4" />
+        </button>
+    );
+};
 
 const Navbar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -25,7 +45,6 @@ const Navbar = () => {
                     </span>
                 </div>
 
-                {/* Desktop nav */}
                 <div className="hidden items-center gap-8 md:flex">
                     <a href="#services" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                         Fonctionnalités
@@ -39,17 +58,14 @@ const Navbar = () => {
                 </div>
 
                 <div className="hidden items-center gap-3 md:flex">
-                    {/* LIEN VERS LOGIN */}
                     <Link to="/login" className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
                         Se connecter
                     </Link>
-                    {/* LIEN VERS REGISTER */}
                     <Link to="/register" className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
                         S'inscrire gratuitement
                     </Link>
                 </div>
 
-                {/* Mobile toggle */}
                 <button
                     className="md:hidden text-foreground"
                     onClick={() => setMobileOpen(!mobileOpen)}
@@ -58,7 +74,6 @@ const Navbar = () => {
                 </button>
             </div>
 
-            {/* Mobile menu */}
             {mobileOpen && (
                 <div className="border-t border-border bg-card px-6 py-4 md:hidden">
                     <div className="flex flex-col gap-4">
@@ -92,21 +107,16 @@ const Hero = () => (
                     </h1>
                     <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground">
                         La plateforme tout-en-un qui simplifie la création, la gestion et
-                        l'analyse de vos questionnaires. Conçue pour les éducateurs
-                        exigeants.
+                        l'analyse de vos questionnaires. Conçue pour les éducateurs exigeants.
                     </p>
                     <div className="mt-8 flex flex-wrap items-center gap-4">
-                        {/* LIEN VERS REGISTER */}
-                        <Link to="/register" className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg">
-                            Commencer gratuitement
-                            <ArrowRight className="h-4 w-4" />
-                        </Link>
+                        {/* ✅ Bouton intelligent */}
+                        <SmartCTAButton className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg" />
                         <button className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent">
                             Voir la démo
                         </button>
                     </div>
                 </div>
-                {/* ... reste du Hero identique ... */}
                 <div className="animate-in fade-in zoom-in duration-1000 delay-200">
                     <div className="relative">
                         <div className="absolute -inset-4 rounded-2xl bg-primary/5 blur-2xl" />
@@ -122,25 +132,21 @@ const Hero = () => (
     </section>
 );
 
-// ... Sections Services et SocialProof identiques ...
 const services = [
     {
         icon: Zap,
         title: "Création Rapide",
-        description:
-            "Générateur intuitif de questions à choix multiples. Créez un QCM complet en quelques minutes grâce à notre éditeur intelligent.",
+        description: "Générateur intuitif de questions à choix multiples. Créez un QCM complet en quelques minutes grâce à notre éditeur intelligent.",
     },
     {
         icon: BarChart3,
         title: "Analyses Détaillées",
-        description:
-            "Suivi des scores et moyennes en temps réel. Identifiez les lacunes et adaptez votre enseignement grâce à des rapports visuels.",
+        description: "Suivi des scores et moyennes en temps réel. Identifiez les lacunes et adaptez votre enseignement grâce à des rapports visuels.",
     },
     {
         icon: Users,
         title: "Gestion d'Équipe",
-        description:
-            "Espace collaboratif pour enseignants et étudiants. Partagez des QCM, gérez les groupes et suivez la progression collective.",
+        description: "Espace collaboratif pour enseignants et étudiants. Partagez des QCM, gérez les groupes et suivez la progression collective.",
     },
 ];
 
@@ -152,13 +158,11 @@ const Services = () => (
                     Tout ce dont vous avez besoin
                 </h2>
                 <p className="mt-4 text-lg text-muted-foreground">
-                    Des outils puissants pour créer, distribuer et analyser vos
-                    questionnaires.
+                    Des outils puissants pour créer, distribuer et analyser vos questionnaires.
                 </p>
             </div>
-
             <div className="mt-14 grid gap-8 md:grid-cols-3">
-                {services.map((service, i) => (
+                {services.map((service) => (
                     <div
                         key={service.title}
                         className="group rounded-xl border border-border bg-background p-8 transition-all hover:border-primary/30 hover:shadow-lg"
@@ -183,13 +187,12 @@ const SocialProof = () => (
     <section id="social" className="bg-background px-6 py-20 md:py-28">
         <div className="mx-auto max-w-6xl text-center">
             <div className="inline-flex items-center gap-3 rounded-full border border-border bg-card px-5 py-2">
-        <span className="text-sm font-medium text-foreground">
-          Rejoint par plus de{" "}
-            <span className="font-bold text-primary">1 200 utilisateurs</span>{" "}
-            ce mois-ci
-        </span>
+                <span className="text-sm font-medium text-foreground">
+                    Rejoint par plus de{" "}
+                    <span className="font-bold text-primary">1 200 utilisateurs</span>{" "}
+                    ce mois-ci
+                </span>
             </div>
-
             <div className="mt-14 grid gap-6 md:grid-cols-3">
                 {[
                     {
@@ -208,20 +211,11 @@ const SocialProof = () => (
                         role: "Directrice pédagogique",
                     },
                 ].map((testimonial) => (
-                    <div
-                        key={testimonial.name}
-                        className="rounded-xl border border-border bg-card p-6 text-left"
-                    >
-                        <p className="leading-relaxed text-muted-foreground">
-                            "{testimonial.quote}"
-                        </p>
+                    <div key={testimonial.name} className="rounded-xl border border-border bg-card p-6 text-left">
+                        <p className="leading-relaxed text-muted-foreground">"{testimonial.quote}"</p>
                         <div className="mt-4 border-t border-border pt-4">
-                            <p className="font-heading text-sm font-semibold text-foreground">
-                                {testimonial.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                {testimonial.role}
-                            </p>
+                            <p className="font-heading text-sm font-semibold text-foreground">{testimonial.name}</p>
+                            <p className="text-xs text-muted-foreground">{testimonial.role}</p>
                         </div>
                     </div>
                 ))}
@@ -238,15 +232,14 @@ const CTABanner = () => (
                     Prêt à révolutionner vos évaluations ?
                 </h2>
                 <p className="mx-auto mt-4 max-w-lg text-lg text-primary-foreground/80">
-                    Rejoignez des milliers d'éducateurs qui font confiance à QCM
-                    Generator pour leurs évaluations.
+                    Rejoignez des milliers d'éducateurs qui font confiance à QCM Generator.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-                    {/* LIEN VERS REGISTER */}
-                    <Link to="/register" className="inline-flex items-center gap-2 rounded-lg bg-card px-6 py-3 text-sm font-semibold text-foreground shadow-md transition-colors hover:bg-card/90">
-                        Démarrer gratuitement
-                        <ArrowRight className="h-4 w-4" />
-                    </Link>
+                    {/* ✅ Bouton intelligent */}
+                    <SmartCTAButton
+                        label="Démarrer gratuitement"
+                        className="inline-flex items-center gap-2 rounded-lg bg-card px-6 py-3 text-sm font-semibold text-foreground shadow-md transition-colors hover:bg-card/90"
+                    />
                     <button className="inline-flex items-center gap-2 rounded-lg border border-primary-foreground/30 px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/10">
                         Contacter l'équipe
                     </button>
@@ -261,13 +254,9 @@ const Footer = () => (
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 md:flex-row">
             <div className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-primary" />
-                <span className="font-heading text-sm font-semibold text-foreground">
-          QCM Generator
-        </span>
+                <span className="font-heading text-sm font-semibold text-foreground">QCM Generator</span>
             </div>
-            <p className="text-xs text-muted-foreground">
-                © 2026 QCM Generator. Tous droits réservés.
-            </p>
+            <p className="text-xs text-muted-foreground">© 2026 QCM Generator. Tous droits réservés.</p>
         </div>
     </footer>
 );
