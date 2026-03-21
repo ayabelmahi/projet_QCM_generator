@@ -34,81 +34,229 @@ export default function DashboardPage() {
   const [deleteQcm, setDeleteQcm] = useState(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [candidateQuiz, setCandidateQuiz] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   const fetchQuizzes = useCallback(async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("token")
-      const response = await fetch(`${API_BASE_URL}/qcms`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/ld+json",
-        },
-      })
+  setLoading(true)
+  try {
+    const token = localStorage.getItem("token")
 
-      if (response.ok) {
-        const data = await response.json()
-        const items = data["hydra:member"] || []
+    const response = await fetch(`${API_BASE_URL}/qcms`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept  : "application/ld+json", 
+      },
+    })
 
-        const formattedData = items.map((q) => ({
-          id: q.id.toString(),
-          title: q.title,
-          subject: q.subject,
-          questionsCount: q.questions ? q.questions.length : 0,
-          timer: q.timerSeconds ? Math.floor(q.timerSeconds / 60) : null,
-          successRate: q.successRate || 50,
-          status: q.status || "draft",
-          createdAt: q.createdAt ? q.createdAt.split("T")[0] : "",
-          questions: q.questions || [],
-          versionsCount: q.versionsCount || 1,
-        }))
+    if (response.ok) {
+      const data = await response.json()
 
-        setQuizzes(formattedData)
-      }
-    } catch (error) {
-      console.error("Erreur API:", error)
-    } finally {
-      setLoading(false)
+      const items = data["hydra:member"] || data.member || []
+
+      const formattedData = items.map((q) => ({
+        id: q.id.toString(),
+        title: q.title,
+        subject: q.subject,
+        questionsCount: q.questions?.length || 0,
+        timer: q.timerSeconds ? Math.floor(q.timerSeconds / 60) : null,
+        successRate: q.successRate || 50,
+        status: q.status || "draft",
+        createdAt: q.createdAt || "",
+        questions: q.questions || [],
+        versionsCount: q.versionsCount || 1,
+      }))
+
+      setQuizzes(formattedData)
+
+      // BONUS
+      console.log("Total:", data.totalItems)
+
     }
-  }, [])
+  } catch (error) {
+    console.error("Erreur API:", error)
+  } finally {
+    setLoading(false)
+  }
+}, [])
 
   useEffect(() => {
     fetchQuizzes()
   }, [fetchQuizzes])
 
-  const handleSave = async (data) => {
-    const token = localStorage.getItem("token")
-    const isEdit = !!data.id
-    const url = isEdit ? `${API_BASE_URL}/qcms/${data.id}` : `${API_BASE_URL}/qcms`
-    const method = isEdit ? "PATCH" : "POST"
-    const contentType = isEdit ? "application/merge-patch+json" : "application/json"
+  
 
-    const body = {
-      title: data.title,
-      subject: data.subject,
-      timerSeconds: data.timer ? parseInt(data.timer) * 60 : null,
-      successRate: parseInt(data.successRate) || 50,
-      status: data.status || "draft",
-    }
+const handleSave = async (data) => {
+  const token = localStorage.getItem("token");
 
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": contentType,
-        },
-        body: JSON.stringify(body),
-      })
+  setSaving(true); // 🔥 start loading
 
-      if (response.ok) {
-        fetchQuizzes()
-        setFormOpen(false)
+  try {
+    const qcmRes = await fetch(`${API_BASE_URL}/qcms`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/ld+json",
+      },
+      body: JSON.stringify({
+        title: data.title,
+        subject: data.subject,
+        successRate: data.successRate,
+        timerSeconds: data.timer ? data.timer * 60 : null,
+        status: "draft",
+        author: "/api/users/1",
+      }),
+    });
+
+    const qcm = await qcmRes.json();
+
+    // 🔥 UPDATE UI DIRECT (IMPORTANT)
+    setQuizzes((prev) => [
+      {
+        id: qcm.id.toString(),
+        title: data.title,
+        subject: data.subject,
+        questionsCount: data.questions?.length || 0,
+        timer: data.timer,
+        successRate: data.successRate,
+        status: "draft",
+        createdAt: new Date().toISOString(),
+        versionsCount: 1,
+      },
+      ...prev,
+    ]);
+
+    // 🔥 continuer en arrière-plan (pas bloquant)
+    (async () => {
+      for (const question of data.questions || []) {
+        const questionRes = await fetch(`${API_BASE_URL}/questions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/ld+json",
+          },
+          body: JSON.stringify({
+            content: question.content,
+            type: "text",
+            qcm: `/api/qcms/${qcm.id}`,
+          }),
+        });
+
+        const createdQuestion = await questionRes.json();
+
+        for (const choice of question.choices || []) {
+          await fetch(`${API_BASE_URL}/choices`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/ld+json",
+            },
+            body: JSON.stringify({
+              label: choice.text,
+              isCorrect: choice.isCorrect === true,
+              question: `/api/questions/${createdQuestion.id}`,
+            }),
+          });
+        }
       }
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error)
-    }
+    })();
+
+    alert("✅ Quiz créé avec succès");
+    setFormOpen(false);
+
+  } catch (error) {
+    console.error("Erreur:", error);
+    alert("❌ Erreur lors de la création");
+  } finally {
+    setSaving(false); // 🔥 stop loading
   }
+};
+
+// const handleSave = async (data) => {
+//   const token = localStorage.getItem("token");
+
+//   try {
+//     // 1️⃣ créer QCM
+//     const qcmRes = await fetch(`${API_BASE_URL}/qcms`, {
+//       method: "POST",
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//         "Content-Type": "application/ld+json",
+//       },
+//       body: JSON.stringify({
+//         title: data.title,
+//         subject: data.subject,
+//         successRate: data.successRate,
+//         timerSeconds: data.timer ? data.timer * 60 : null,
+//         status: "draft",
+//         author: "/api/users/1",
+//       }),
+//     });
+
+//     const qcm = await qcmRes.json();
+
+//     // 2️⃣ créer questions + choices en parallèle 🚀
+//     await Promise.all(
+//       (data.questions || []).map(async (question) => {
+//         const questionRes = await fetch(`${API_BASE_URL}/questions`, {
+//           method: "POST",
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//             "Content-Type": "application/ld+json",
+//           },
+//           body: JSON.stringify({
+//             content: question.content,
+//             type: "text",
+//             qcm: `/api/qcms/${qcm.id}`,
+//           }),
+//         });
+
+//         const createdQuestion = await questionRes.json();
+
+//         await Promise.all(
+//           (question.choices || []).map(async (choice) => {
+//             return fetch(`${API_BASE_URL}/choices`, {
+//               method: "POST",
+//               headers: {
+//                 Authorization: `Bearer ${token}`,
+//                 "Content-Type": "application/ld+json",
+//               },
+//               body: JSON.stringify({
+//                 label: choice.text,
+//                 isCorrect: choice.isCorrect === true,
+//                 question: `/api/questions/${createdQuestion.id}`,
+//               }),
+//             });
+//           })
+//         );
+//       })
+//     );
+
+//     // 3️⃣ UPDATE UI IMMÉDIAT 🔥 (PAS besoin reload)
+//     setQuizzes((prev) => [
+//       {
+//         id: qcm.id.toString(),
+//         title: data.title,
+//         subject: data.subject,
+//         questionsCount: data.questions?.length || 0,
+//         timer: data.timer,
+//         successRate: data.successRate,
+//         status: "draft",
+//         createdAt: new Date().toISOString(),
+//         versionsCount: 1,
+//       },
+//       ...prev,
+//     ]);
+
+//     // 4️⃣ feedback utilisateur
+//     alert("✅ Quiz créé avec succès");
+
+//     setFormOpen(false);
+
+//   } catch (error) {
+//     console.error("Erreur:", error);
+//     alert("❌ Erreur lors de la création");
+//   }
+// };
 
   const handleConfirmDelete = async () => {
     if (!deleteQcm) return
@@ -191,7 +339,7 @@ export default function DashboardPage() {
         <main className="flex-1 p-8">
           {loading ? (
             <div className="flex h-64 items-center justify-center italic text-gray-500">
-              Chargement des données Symfony...
+              Chargement des données 
             </div>
           ) : (
             <div className="flex flex-col gap-6">

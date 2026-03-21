@@ -171,22 +171,16 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
 
                 <div>
                   <Label className="text-sm text-card-foreground">Sujet</Label>
-                  <Select value={subject} onValueChange={setSubject}>
-                    <SelectTrigger className="mt-1.5 border-border bg-card">
-                      <SelectValue placeholder="Choisir un sujet" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subjects.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="Ex: Informatique"
+                    className="mt-1.5 border-border bg-card"
+                  />
                 </div>
 
-                <div>
-                  <Label className="text-sm text-card-foreground">Nombre de versions</Label>
+                {/* <div> */}
+                  {/* <Label className="text-sm text-card-foreground">Nombre de versions</Label>
                   <Input
                     type="number"
                     min={1}
@@ -194,8 +188,8 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
                     value={versionsCount}
                     onChange={(e) => setVersionsCount(Number(e.target.value))}
                     className="mt-1.5 border-border bg-card"
-                  />
-                </div>
+                  /> */}
+                {/* </div> */}
 
                 <div>
                   <Label className="text-sm text-card-foreground">Taux de reussite (%)</Label>
@@ -272,11 +266,10 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
                                 key={opt.value}
                                 type="button"
                                 onClick={() => updateQuestion(qIdx, { type: opt.value })}
-                                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs transition-colors first:rounded-l-lg last:rounded-r-lg ${
-                                  question.type === opt.value
+                                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs transition-colors first:rounded-l-lg last:rounded-r-lg ${question.type === opt.value
                                     ? "bg-primary text-primary-foreground"
                                     : "text-muted-foreground hover:text-foreground"
-                                }`}
+                                  }`}
                               >
                                 <Icon className="h-3.5 w-3.5" />
                                 <span className="hidden sm:inline">{opt.label}</span>
