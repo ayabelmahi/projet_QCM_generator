@@ -41,6 +41,18 @@ class Qcm
 
     #[ORM\OneToMany(mappedBy: 'qcm', targetEntity: Question::class, orphanRemoval: true)]
     private Collection $questions; // Liste des questions rattachées
+    #[ORM\Column]
+    private int $versionsCount = 1;
+    public function getVersionsCount(): int
+    {
+        return $this->versionsCount;
+    }
+
+    public function setVersionsCount(int $versionsCount): self
+    {
+        $this->versionsCount = $versionsCount;
+        return $this;
+    }
 
     public function __construct()
     {
