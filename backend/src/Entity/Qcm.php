@@ -7,9 +7,25 @@ use App\Repository\QcmRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\Post;
+use App\Controller\PublishQcmController;
 
 #[ORM\Entity(repositoryClass: QcmRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new \ApiPlatform\Metadata\Get(),
+        new \ApiPlatform\Metadata\GetCollection(),
+        new \ApiPlatform\Metadata\Post(),
+        new \ApiPlatform\Metadata\Patch(),
+        new \ApiPlatform\Metadata\Delete(),
+        new Post(
+            uriTemplate: '/qcms/{id}/publish',
+            controller: PublishQcmController::class,
+            deserialize: false,
+            name: 'qcm_publish'
+        )
+    ]
+)]
 class Qcm
 {
     #[ORM\Id]
