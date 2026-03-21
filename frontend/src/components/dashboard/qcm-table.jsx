@@ -39,30 +39,31 @@ import {
   TooltipTrigger,
 } from "../ui_dashboard/tooltip"
 
-const subjects = [
-  "Informatique",
-  "Mathématiques",
-  "Français",
-  "Histoire",
-  "Sciences",
-  "Anglais",
-]
+// const subjects = [
+//   "Informatique",
+//   "Mathématiques",
+//   "Français",
+//   "Histoire",
+//   "Sciences",
+//   "Anglais",
+// ]
 
 export function QCMTable({ quizzes, onView, onEdit, onDelete, onPublish, onStats }) {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [subjectFilter, setSubjectFilter] = useState("all")
+  // const [subjectFilter, setSubjectFilter] = useState("all")
 
-  const filtered = quizzes.filter((q) => {
-    const matchesSearch =
-      q.title.toLowerCase().includes(search.toLowerCase()) ||
-      q.subject.toLowerCase().includes(search.toLowerCase())
+  // const filtered = quizzes.filter((q) => {
+  //   const matchesSearch =
+  //     q.title.toLowerCase().includes(search.toLowerCase()) ||
+  //     q.subject.toLowerCase().includes(search.toLowerCase())
 
-    const matchesStatus = statusFilter === "all" || q.status === statusFilter
-    const matchesSubject = subjectFilter === "all" || q.subject === subjectFilter
+  //   const matchesStatus = statusFilter === "all" || q.status === statusFilter
+  //   // const matchesSubject = subjectFilter === "all" || q.subject === subjectFilter
 
-    return matchesSearch && matchesStatus && matchesSubject
-  })
+  //   return matchesSearch && matchesStatus 
+  // })
+  const filtered = quizzes
 
   return (
     <Card className="overflow-hidden border-border/50 bg-card shadow-sm">
@@ -92,7 +93,7 @@ export function QCMTable({ quizzes, onView, onEdit, onDelete, onPublish, onStats
             </SelectContent>
           </Select>
 
-          <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+          {/* <Select value={subjectFilter} onValueChange={setSubjectFilter}>
             <SelectTrigger className="h-9 w-40 border-border bg-background text-sm">
               <SelectValue placeholder="Sujet" />
             </SelectTrigger>
@@ -104,7 +105,7 @@ export function QCMTable({ quizzes, onView, onEdit, onDelete, onPublish, onStats
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select> */}
         </div>
       </div>
 

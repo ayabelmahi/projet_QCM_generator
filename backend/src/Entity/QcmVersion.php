@@ -19,33 +19,77 @@ class QcmVersion
     #[ORM\Column]
     private int $versionNumber;
 
-    #[ORM\Column(length: 36)]
-    private string $publicId;
+    #[ORM\Column(length: 64)]
+    private ?string $publicId = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $shuffleSeed = null;
 
     #[ORM\Column]
-    private int $shuffleSeed;
-
-    #[ORM\Column]
-    private \DateTimeImmutable $createdAt;
+    private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->publicId = bin2hex(random_bytes(16));
-        $this->shuffleSeed = random_int(1, 999999);
     }
 
-    public function getId(): ?int { return $this->id; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 
-    public function getQcm(): ?Qcm { return $this->qcm; }
+    public function getQcm(): ?Qcm
+    {
+        return $this->qcm;
+    }
 
-    public function setQcm(Qcm $qcm): self { $this->qcm = $qcm; return $this; }
+    public function setQcm(Qcm $qcm): self
+    {
+        $this->qcm = $qcm;
+        return $this;
+    }
 
-    public function getVersionNumber(): int { return $this->versionNumber; }
+    public function getVersionNumber(): int
+    {
+        return $this->versionNumber;
+    }
 
-    public function setVersionNumber(int $versionNumber): self { $this->versionNumber = $versionNumber; return $this; }
+    public function setVersionNumber(int $versionNumber): self
+    {
+        $this->versionNumber = $versionNumber;
+        return $this;
+    }
 
-    public function getPublicId(): string { return $this->publicId; }
+    public function getPublicId(): ?string
+    {
+        return $this->publicId;
+    }
 
-    public function getShuffleSeed(): int { return $this->shuffleSeed; }
+    public function setPublicId(string $publicId): self
+    {
+        $this->publicId = $publicId;
+        return $this;
+    }
+
+    public function getShuffleSeed(): ?string
+    {
+        return $this->shuffleSeed;
+    }
+
+    public function setShuffleSeed(string $shuffleSeed): self
+    {
+        $this->shuffleSeed = $shuffleSeed;
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+        return $this;
+    }
 }
