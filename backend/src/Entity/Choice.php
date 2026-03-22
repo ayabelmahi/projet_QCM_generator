@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Repository\ChoiceRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ChoiceRepository::class)]
 #[ApiResource]
@@ -14,6 +15,7 @@ class Choice
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['qcm:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'choices')]
@@ -21,9 +23,11 @@ class Choice
     private ?Question $question = null; // Un choix appartient à une question
 
     #[ORM\Column(type: 'text')]
+    #[Groups(['qcm:read'])]
     private ?string $label = null; // Le texte de la réponse
 
     #[ORM\Column]
+    #[Groups(['qcm:read'])]
     private ?bool $isCorrect = false; // Définit si c'est la bonne réponse
 
     public function getId(): ?int
