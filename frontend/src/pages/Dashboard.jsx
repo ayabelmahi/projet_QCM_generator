@@ -396,6 +396,7 @@ export default function DashboardPage() {
                 subtitle={config.subtitle}
                 onCreateQuiz={handleCreate}
                 onCreateWithAI={() => console.log("Créer avec IA")}
+                onNavigate={setActivePage}
             />
 
             <main className="flex-1 p-8">
