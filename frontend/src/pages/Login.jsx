@@ -29,6 +29,7 @@ const Login = () => {
 
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
+                localStorage.setItem('userEmail', email);
                 navigate('/dashboard');
             }
         } catch (err) {
