@@ -53,18 +53,20 @@ export default function DashboardPage() {
 
         const items = data["hydra:member"] || data.member || []
 
-        const formattedData = items.map((q) => ({
-          id: q.id.toString(),
-          title: q.title,
-          subject: q.subject,
-          questionsCount: q.questions?.length || 0,
-          timer: q.timerSeconds ? Math.floor(q.timerSeconds / 60) : null,
-          successRate: q.successRate || 50,
-          status: q.status || "draft",
-          createdAt: q.createdAt || "",
-          questions: q.questions || [],
-          versionsCount: q.versionsCount || 1,
-        }))
+        const formattedData = items
+            .filter((q) => q.id)
+            .map((q) => ({
+              id: q.id.toString(),
+              title: q.title,
+              subject: q.subject,
+              questionsCount: q.questions?.length || 0,
+              timer: q.timerSeconds ? Math.floor(q.timerSeconds / 60) : null,
+              successRate: q.successRate || 50,
+              status: q.status || "draft",
+              createdAt: q.createdAt || "",
+              questions: q.questions || [],
+              versionsCount: q.versionsCount || 1,
+            }))
 
         setQuizzes(formattedData)
 
@@ -318,50 +320,33 @@ export default function DashboardPage() {
   const handleEdit = async (qcm) => {
     const token = localStorage.getItem("token")
 
+    setFormQcm({ ...qcm, questions: null })
+    setFormOpen(true)
+
     try {
-      const questionsWithChoices = await Promise.all(
-          (qcm.questions || []).map(async (questionIri) => {
-            const id = typeof questionIri === "string"
-                ? questionIri.split("/").pop()
-                : questionIri.id
+      const res = await fetch(`${API_BASE_URL}/qcms/${qcm.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/ld+json"
+        }
+      })
+      const data = await res.json()
 
-            const res = await fetch(`${API_BASE_URL}/questions/${id}`, {
-              headers: {Authorization: `Bearer ${token}`}
-            })
-            const q = await res.json()
+      const questionsWithChoices = (data.questions || []).map((q) => ({
+        id: q.id.toString(),
+        content: q.content || "",
+        type: q.type || "text",
+        choices: (q.choices || []).map((c) => ({
+          id: c.id.toString(),
+          text: c.label || "",
+          isCorrect: c.isCorrect || false,
+        }))
+      }))
 
-            const choices = await Promise.all(
-                (q.choices || []).map(async (choiceIri) => {
-                  //const cId = choiceIri.split("/").pop()
-                  const cId = choiceIri.split("/").pop().split(":")[0]
-                  const cRes = await fetch(`${API_BASE_URL}/choices/${cId}`, {
-                    headers: {Authorization: `Bearer ${token}`}
-                  })
-                  const c = await cRes.json()
-                  return {
-                    id: c.id.toString(),
-                    text: c.label || "",
-                    isCorrect: c.isCorrect || false,
-                  }
-                })
-            )
-
-            return {
-              id: q.id.toString(),
-              content: q.content || "",
-              type: q.type || "text",
-              choices,
-            }
-          })
-      )
-
-      setFormQcm({...qcm, questions: questionsWithChoices})
-      setFormOpen(true)
+      setFormQcm({ ...qcm, questions: questionsWithChoices })
 
     } catch (error) {
       console.error("Erreur chargement questions:", error)
-      setFormQcm(qcm)
-      setFormOpen(true)
     }
   }
 

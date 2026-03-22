@@ -64,7 +64,8 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
       setHasTimer(!!qcm.timer)
       setTimer(qcm.timer || 30)
       setSuccessRate(qcm.successRate || 50)
-      setQuestions(qcm.questions?.length > 0 ? qcm.questions : [defaultQuestion()])
+      //setQuestions(qcm.questions?.length > 0 ? qcm.questions : [defaultQuestion()])
+      setQuestions(qcm.questions === null ? [] : qcm.questions?.length > 0 ? qcm.questions : [defaultQuestion()])
     } else if (open) {
       setTitle("")
       setSubject("")

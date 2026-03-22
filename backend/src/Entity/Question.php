@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: QuestionRepository::class)]
 #[ApiResource]
@@ -16,6 +17,7 @@ class Question
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['qcm:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'questions')]
@@ -23,15 +25,18 @@ class Question
     private ?Qcm $qcm = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['qcm:read'])]
     private ?string $type = 'text'; // text, image, video, audio
 
     #[ORM\Column(type: 'text')]
+    #[Groups(['qcm:read'])]
     private ?string $content = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $mediaUrl = null;
 
     #[ORM\OneToMany(mappedBy: 'question', targetEntity: Choice::class, orphanRemoval: true)]
+    #[Groups(['qcm:read'])]
     private Collection $choices;
 
     public function __construct()
