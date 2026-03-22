@@ -37,144 +37,172 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false)
 
   const fetchQuizzes = useCallback(async () => {
-  setLoading(true)
-  try {
-    const token = localStorage.getItem("token")
+    setLoading(true)
+    try {
+      const token = localStorage.getItem("token")
 
-    const response = await fetch(`${API_BASE_URL}/qcms`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept  : "application/ld+json", 
-      },
-    })
+      const response = await fetch(`${API_BASE_URL}/qcms`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/ld+json",
+        },
+      })
 
-    if (response.ok) {
-      const data = await response.json()
+      if (response.ok) {
+        const data = await response.json()
 
-      const items = data["hydra:member"] || data.member || []
+        const items = data["hydra:member"] || data.member || []
 
-      const formattedData = items.map((q) => ({
-        id: q.id.toString(),
-        title: q.title,
-        subject: q.subject,
-        questionsCount: q.questions?.length || 0,
-        timer: q.timerSeconds ? Math.floor(q.timerSeconds / 60) : null,
-        successRate: q.successRate || 50,
-        status: q.status || "draft",
-        createdAt: q.createdAt || "",
-        questions: q.questions || [],
-        versionsCount: q.versionsCount || 1,
-      }))
+        const formattedData = items
+            .filter((q) => q.id)
+            .map((q) => ({
+              id: q.id.toString(),
+              title: q.title,
+              subject: q.subject,
+              questionsCount: q.questions?.length || 0,
+              timer: q.timerSeconds ? Math.floor(q.timerSeconds / 60) : null,
+              successRate: q.successRate || 50,
+              status: q.status || "draft",
+              createdAt: q.createdAt || "",
+              questions: q.questions || [],
+              versionsCount: q.versionsCount || 1,
+            }))
 
-      setQuizzes(formattedData)
+        setQuizzes(formattedData)
 
-      // BONUS
-      console.log("Total:", data.totalItems)
+        // BONUS
+        console.log("Total:", data.totalItems)
 
+      }
+    } catch (error) {
+      console.error("Erreur API:", error)
+    } finally {
+      setLoading(false)
     }
-  } catch (error) {
-    console.error("Erreur API:", error)
-  } finally {
-    setLoading(false)
-  }
-}, [])
+  }, [])
 
   useEffect(() => {
     fetchQuizzes()
   }, [fetchQuizzes])
 
-  
 
-const handleSave = async (data) => {
-  const token = localStorage.getItem("token");
+  const handleSave = async (data) => {
+    const token = localStorage.getItem("token");
+    setSaving(true);
 
-  setSaving(true); // 🔥 start loading
+    try {
+      if (data.id) {
+        // ✏️ MODIFICATION — PATCH
+        await fetch(`${API_BASE_URL}/qcms/${data.id}`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/merge-patch+json",
+          },
+          body: JSON.stringify({
+            title: data.title,
+            subject: data.subject,
+            successRate: data.successRate,
+            timerSeconds: data.timer ? data.timer * 60 : null,
+          }),
+        });
 
-  try {
-    const qcmRes = await fetch(`${API_BASE_URL}/qcms`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/ld+json",
-      },
-      body: JSON.stringify({
-        title: data.title,
-        subject: data.subject,
-        successRate: data.successRate,
-        timerSeconds: data.timer ? data.timer * 60 : null,
-        status: "draft",
-        author: "/api/users/1",
-      }),
-    });
+        setQuizzes((prev) =>
+            prev.map((q) =>
+                q.id === data.id
+                    ? { ...q, title: data.title, subject: data.subject, successRate: data.successRate, timer: data.timer }
+                    : q
+            )
+        );
 
-    const qcm = await qcmRes.json();
+        alert("✅ Quiz modifié avec succès");
 
-    // 🔥 UPDATE UI DIRECT (IMPORTANT)
-    setQuizzes((prev) => [
-      {
-        id: qcm.id.toString(),
-        title: data.title,
-        subject: data.subject,
-        questionsCount: data.questions?.length || 0,
-        timer: data.timer,
-        successRate: data.successRate,
-        status: "draft",
-        createdAt: new Date().toISOString(),
-        versionsCount: 1,
-      },
-      ...prev,
-    ]);
-
-    // 🔥 continuer en arrière-plan (pas bloquant)
-    (async () => {
-      for (const question of data.questions || []) {
-        const questionRes = await fetch(`${API_BASE_URL}/questions`, {
+      } else {
+        // ➕ CRÉATION — POST
+        const qcmRes = await fetch(`${API_BASE_URL}/qcms`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/ld+json",
           },
           body: JSON.stringify({
-            content: question.content,
-            type: "text",
-            qcm: `/api/qcms/${qcm.id}`,
+            title: data.title,
+            subject: data.subject,
+            successRate: data.successRate,
+            timerSeconds: data.timer ? data.timer * 60 : null,
+            status: "draft",
+            author: "/api/users/1",
           }),
         });
 
-        const createdQuestion = await questionRes.json();
+        const qcm = await qcmRes.json();
 
-        for (const choice of question.choices || []) {
-          await fetch(`${API_BASE_URL}/choices`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/ld+json",
-            },
-            body: JSON.stringify({
-              label: choice.text,
-              isCorrect: choice.isCorrect === true,
-              question: `/api/questions/${createdQuestion.id}`,
-            }),
-          });
-        }
+        setQuizzes((prev) => [
+          {
+            id: qcm.id.toString(),
+            title: data.title,
+            subject: data.subject,
+            questionsCount: data.questions?.length || 0,
+            timer: data.timer,
+            successRate: data.successRate,
+            status: "draft",
+            createdAt: new Date().toISOString(),
+            versionsCount: 1,
+          },
+          ...prev,
+        ]);
+
+        (async () => {
+          for (const question of data.questions || []) {
+            const questionRes = await fetch(`${API_BASE_URL}/questions`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/ld+json",
+              },
+              body: JSON.stringify({
+                content: question.content,
+                type: "text",
+                qcm: `/api/qcms/${qcm.id}`,
+              }),
+            });
+
+            const createdQuestion = await questionRes.json();
+
+            for (const choice of question.choices || []) {
+              await fetch(`${API_BASE_URL}/choices`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/ld+json",
+                },
+                body: JSON.stringify({
+                  label: choice.text,
+                  isCorrect: choice.isCorrect === true,
+                  question: `/api/questions/${createdQuestion.id}`,
+                }),
+              });
+            }
+          }
+        })();
+
+        alert("✅ Quiz créé avec succès");
       }
-    })();
 
-    alert("✅ Quiz créé avec succès");
-    setFormOpen(false);
+      setFormOpen(false);
 
-  } catch (error) {
-    console.error("Erreur:", error);
-    alert("❌ Erreur lors de la création");
-  } finally {
-    setSaving(false); // 🔥 stop loading
-  }
-};
+    } catch (error) {
+      console.error("Erreur:", error);
+      alert("❌ Erreur lors de la sauvegarde");
+    } finally {
+      setSaving(false);
+    }
+  };
 
 // const handleSave = async (data) => {
 //   const token = localStorage.getItem("token");
 
-//   try {
+//   try
 //     // 1️⃣ créer QCM
 //     const qcmRes = await fetch(`${API_BASE_URL}/qcms`, {
 //       method: "POST",
@@ -266,7 +294,7 @@ const handleSave = async (data) => {
     try {
       const response = await fetch(`${API_BASE_URL}/qcms/${deleteQcm.id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {Authorization: `Bearer ${token}`},
       })
 
       if (response.ok) {
@@ -284,164 +312,198 @@ const handleSave = async (data) => {
     setDetailOpen(true)
   }
 
-  const handleEdit = (qcm) => {
-    setFormQcm(qcm)
+  /* const handleEdit = (qcm) => {
+     setFormQcm(qcm)
+     setFormOpen(true)
+   }
+   */
+  const handleEdit = async (qcm) => {
+    const token = localStorage.getItem("token")
+
+    setFormQcm({ ...qcm, questions: null })
     setFormOpen(true)
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/qcms/${qcm.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/ld+json"
+        }
+      })
+      const data = await res.json()
+
+      const questionsWithChoices = (data.questions || []).map((q) => ({
+        id: q.id.toString(),
+        content: q.content || "",
+        type: q.type || "text",
+        choices: (q.choices || []).map((c) => ({
+          id: c.id.toString(),
+          text: c.label || "",
+          isCorrect: c.isCorrect || false,
+        }))
+      }))
+
+      setFormQcm({ ...qcm, questions: questionsWithChoices })
+
+    } catch (error) {
+      console.error("Erreur chargement questions:", error)
+    }
   }
 
-  const handleDelete = (qcm) => {
-    setDeleteQcm(qcm)
-    setDeleteOpen(true)
-  }
 
-  const handlePublish = (qcm) => {
-    setPublishQcm(qcm)
-    setPublishOpen(true)
-  }
+    const handleDelete = (qcm) => {
+      setDeleteQcm(qcm)
+      setDeleteOpen(true)
+    }
 
-  const handleStats = (qcm) => {
-    setStatsQcm(qcm)
-    setStatsOpen(true)
-  }
+    const handlePublish = (qcm) => {
+      setPublishQcm(qcm)
+      setPublishOpen(true)
+    }
 
-  const handleCreate = () => {
-    setFormQcm(null)
-    setFormOpen(true)
-  }
+    const handleStats = (qcm) => {
+      setStatsQcm(qcm)
+      setStatsOpen(true)
+    }
 
-  if (candidateQuiz) {
-    return <CandidateQuiz qcm={candidateQuiz} onBack={() => setCandidateQuiz(null)} />
-  }
+    const handleCreate = () => {
+      setFormQcm(null)
+      setFormOpen(true)
+    }
 
-  const pageTitles = {
-    dashboard: { title: "Dashboard", subtitle: "Vue d'ensemble de vos quiz" },
-    quizzes: { title: "Mes Quiz", subtitle: "Gérez et organisez vos quiz" },
-    create: { title: "Créer un Quiz", subtitle: "Concevez un nouveau quiz" },
-    results: { title: "Résultats", subtitle: "Consultez les résultats des candidats" },
-    statistics: { title: "Statistiques", subtitle: "Analysez les performances" },
-    settings: { title: "Paramètres", subtitle: "Configuration de l'application" },
-  }
+    if (candidateQuiz) {
+      return <CandidateQuiz qcm={candidateQuiz} onBack={() => setCandidateQuiz(null)}/>
+    }
 
-  const config = pageTitles[activePage] || pageTitles.dashboard
+    const pageTitles = {
+      dashboard: {title: "Dashboard", subtitle: "Vue d'ensemble de vos quiz"},
+      quizzes: {title: "Mes Quiz", subtitle: "Gérez et organisez vos quiz"},
+      create: {title: "Créer un Quiz", subtitle: "Concevez un nouveau quiz"},
+      results: {title: "Résultats", subtitle: "Consultez les résultats des candidats"},
+      statistics: {title: "Statistiques", subtitle: "Analysez les performances"},
+      settings: {title: "Paramètres", subtitle: "Configuration de l'application"},
+    }
 
-  return (
-    <div className="flex min-h-screen bg-white">
-      <SidebarNav activePage={activePage} onNavigate={setActivePage} />
+    const config = pageTitles[activePage] || pageTitles.dashboard
 
-      <div className="ml-64 flex flex-1 flex-col bg-gray-50/50">
-        <TopHeader
-          title={config.title}
-          subtitle={config.subtitle}
-          onCreateQuiz={handleCreate}
-          onCreateWithAI={() => console.log("Créer avec IA")}
-        />
+    return (
+        <div className="flex min-h-screen bg-white">
+          <SidebarNav activePage={activePage} onNavigate={setActivePage}/>
 
-        <main className="flex-1 p-8">
-          {loading ? (
-            <div className="flex h-64 items-center justify-center italic text-gray-500">
-              Chargement des données 
-            </div>
-          ) : (
-            <div className="flex flex-col gap-6">
-              {activePage === "dashboard" && (
-                <>
-                  <StatsCards quizzes={quizzes} />
-                  <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                    <h3 className="mb-4 text-lg font-bold text-gray-800">Quiz récents</h3>
-                    <QCMTable
-                      quizzes={quizzes}
-                      onView={handleView}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onPublish={handlePublish}
-                      onStats={handleStats}
-                    />
+          <div className="ml-64 flex flex-1 flex-col bg-gray-50/50">
+            <TopHeader
+                title={config.title}
+                subtitle={config.subtitle}
+                onCreateQuiz={handleCreate}
+                onCreateWithAI={() => console.log("Créer avec IA")}
+            />
+
+            <main className="flex-1 p-8">
+              {loading ? (
+                  <div className="flex h-64 items-center justify-center italic text-gray-500">
+                    Chargement des données
                   </div>
-                </>
-              )}
+              ) : (
+                  <div className="flex flex-col gap-6">
+                    {activePage === "dashboard" && (
+                        <>
+                          <StatsCards quizzes={quizzes}/>
+                          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                            <h3 className="mb-4 text-lg font-bold text-gray-800">Quiz récents</h3>
+                            <QCMTable
+                                quizzes={quizzes}
+                                onView={handleView}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                onPublish={handlePublish}
+                                onStats={handleStats}
+                            />
+                          </div>
+                        </>
+                    )}
 
-              {activePage === "quizzes" && (
-                <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                  <QCMTable
-                    quizzes={quizzes}
-                    onView={handleView}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onPublish={handlePublish}
-                    onStats={handleStats}
-                  />
-                </div>
-              )}
+                    {activePage === "quizzes" && (
+                        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                          <QCMTable
+                              quizzes={quizzes}
+                              onView={handleView}
+                              onEdit={handleEdit}
+                              onDelete={handleDelete}
+                              onPublish={handlePublish}
+                              onStats={handleStats}
+                          />
+                        </div>
+                    )}
 
-              {activePage === "create" && (
-                <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                  <div className="flex flex-col gap-3">
-                    <h3 className="text-lg font-bold text-gray-800">Créer un nouveau quiz</h3>
-                    <p className="text-sm text-gray-500">
-                      Cliquez sur le bouton ci-dessous pour ouvrir le formulaire de création.
-                    </p>
-                    <button
-                      onClick={handleCreate}
-                      className="w-fit rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
-                    >
-                      Nouveau Quiz
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activePage === "results" && (
-                <div className="flex flex-col gap-6">
-                  <p className="text-sm text-gray-500">
-                    Sélectionnez un quiz publié pour simuler l'expérience candidat :
-                  </p>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {quizzes
-                      .filter((q) => q.status === "published")
-                      .map((qcm) => (
-                        <div
-                          key={qcm.id}
-                          className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
-                          onClick={() => setCandidateQuiz(qcm)}
-                        >
-                          <h3 className="text-base font-semibold text-gray-900">{qcm.title}</h3>
-                          <p className="mt-2 text-sm text-gray-500">{qcm.subject}</p>
-                          <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
-                            <span>{qcm.questionsCount} questions</span>
-                            <span>{qcm.timer ? `${qcm.timer} min` : "--"}</span>
+                    {activePage === "create" && (
+                        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                          <div className="flex flex-col gap-3">
+                            <h3 className="text-lg font-bold text-gray-800">Créer un nouveau quiz</h3>
+                            <p className="text-sm text-gray-500">
+                              Cliquez sur le bouton ci-dessous pour ouvrir le formulaire de création.
+                            </p>
+                            <button
+                                onClick={handleCreate}
+                                className="w-fit rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+                            >
+                              Nouveau Quiz
+                            </button>
                           </div>
                         </div>
-                      ))}
+                    )}
+
+                    {activePage === "results" && (
+                        <div className="flex flex-col gap-6">
+                          <p className="text-sm text-gray-500">
+                            Sélectionnez un quiz publié pour simuler l'expérience candidat :
+                          </p>
+
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            {quizzes
+                                .filter((q) => q.status === "published")
+                                .map((qcm) => (
+                                    <div
+                                        key={qcm.id}
+                                        className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                                        onClick={() => setCandidateQuiz(qcm)}
+                                    >
+                                      <h3 className="text-base font-semibold text-gray-900">{qcm.title}</h3>
+                                      <p className="mt-2 text-sm text-gray-500">{qcm.subject}</p>
+                                      <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
+                                        <span>{qcm.questionsCount} questions</span>
+                                        <span>{qcm.timer ? `${qcm.timer} min` : "--"}</span>
+                                      </div>
+                                    </div>
+                                ))}
+                          </div>
+                        </div>
+                    )}
+
+                    {activePage === "statistics" && <StatisticsPage quizzes={quizzes}/>}
+
+                    {activePage === "settings" && (
+                        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                          <h3 className="mb-2 text-lg font-bold text-gray-800">Paramètres</h3>
+                          <p className="text-sm text-gray-500">
+                            Cette section sera reliée plus tard aux paramètres réels.
+                          </p>
+                        </div>
+                    )}
                   </div>
-                </div>
               )}
+            </main>
+          </div>
 
-              {activePage === "statistics" && <StatisticsPage quizzes={quizzes} />}
-
-              {activePage === "settings" && (
-                <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                  <h3 className="mb-2 text-lg font-bold text-gray-800">Paramètres</h3>
-                  <p className="text-sm text-gray-500">
-                    Cette section sera reliée plus tard aux paramètres réels.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </main>
-      </div>
-
-      <QCMDetailModal qcm={detailQcm} open={detailOpen} onOpenChange={setDetailOpen} />
-      <QCMFormModal qcm={formQcm} open={formOpen} onOpenChange={setFormOpen} onSave={handleSave} />
-      <PublishModal qcm={publishQcm} open={publishOpen} onOpenChange={setPublishOpen} />
-      <StatsModal qcm={statsQcm} open={statsOpen} onOpenChange={setStatsOpen} />
-      <DeleteDialog
-        qcm={deleteQcm}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onConfirm={handleConfirmDelete}
-      />
-    </div>
-  )
+          <QCMDetailModal qcm={detailQcm} open={detailOpen} onOpenChange={setDetailOpen}/>
+          <QCMFormModal qcm={formQcm} open={formOpen} onOpenChange={setFormOpen} onSave={handleSave}/>
+          <PublishModal qcm={publishQcm} open={publishOpen} onOpenChange={setPublishOpen}/>
+          <StatsModal qcm={statsQcm} open={statsOpen} onOpenChange={setStatsOpen}/>
+          <DeleteDialog
+              qcm={deleteQcm}
+              open={deleteOpen}
+              onOpenChange={setDeleteOpen}
+              onConfirm={handleConfirmDelete}
+          />
+        </div>
+    )
 }

@@ -9,9 +9,11 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\Post;
 use App\Controller\PublishQcmController;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: QcmRepository::class)]
 #[ApiResource(
+    normalizationContext: ['groups' => ['qcm:read']],
     operations: [
         new \ApiPlatform\Metadata\Get(),
         new \ApiPlatform\Metadata\GetCollection(),
@@ -29,8 +31,10 @@ use App\Controller\PublishQcmController;
 class Qcm
 {
     #[ORM\Id]
+
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['qcm:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'qcms')]
@@ -38,26 +42,33 @@ class Qcm
     private ?User $author = null; // Un QCM appartient à 1 user
 
     #[ORM\Column(length: 255)]
+    #[Groups(['qcm:read'])]
     private ?string $title = null; // Titre du QCM
 
     #[ORM\Column(length: 255)]
+    #[Groups(['qcm:read'])]
     private ?string $subject = null; // Sujet (thématique)
 
     #[ORM\Column]
+    #[Groups(['qcm:read'])]
     private ?int $successRate = 80; // Seuil de réussite
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['qcm:read'])]
     private ?int $timerSeconds = null; // Durée optionnelle
 
     #[ORM\Column(length: 50)]
+    #[Groups(['qcm:read'])]
     private ?string $status = 'draft'; // Statut initial
 
     #[ORM\Column]
     private ?bool $isPdfAllowed = true; // Autorisation PDF
 
     #[ORM\OneToMany(mappedBy: 'qcm', targetEntity: Question::class, orphanRemoval: true)]
+    #[Groups(['qcm:read'])]
     private Collection $questions; // Liste des questions rattachées
     #[ORM\Column]
+    #[Groups(['qcm:read'])]
     private int $versionsCount = 1;
     public function getVersionsCount(): int
     {
