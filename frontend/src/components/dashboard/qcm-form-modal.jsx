@@ -139,7 +139,6 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
       questions,
       status: qcm?.status || "draft",
     })
-    onOpenChange(false)
   }
 
   return (
