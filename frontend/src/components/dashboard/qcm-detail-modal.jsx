@@ -131,7 +131,8 @@ export function QCMDetailModal({ qcm, open, onOpenChange }) {
                       <div
                         key={choice.id}
                         className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
-                          choice.isCorrect
+                          //choice.isCorrect
+                            choice.isCorrect
                             ? "bg-[hsl(142,71%,45%)]/10 text-[hsl(142,71%,38%)] font-medium"
                             : "bg-muted/50 text-muted-foreground"
                         }`}
@@ -143,7 +144,8 @@ export function QCMDetailModal({ qcm, open, onOpenChange }) {
                           <XCircle className="h-4 w-4 shrink-0 opacity-40" />
                         )}
 
-                        {choice.text}
+
+                        {choice.text || choice.label}
 
                       </div>
                     ))}
