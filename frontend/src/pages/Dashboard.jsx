@@ -87,117 +87,115 @@ export default function DashboardPage() {
 
 
   const handleSave = async (data) => {
-    const token = localStorage.getItem("token");
-    setSaving(true);
+  const token = localStorage.getItem("token");
+  setSaving(true);
 
-    try {
-      if (data.id) {
-        // ✏️ MODIFICATION — PATCH
-        await fetch(`${API_BASE_URL}/qcms/${data.id}`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/merge-patch+json",
-          },
-          body: JSON.stringify({
-            title: data.title,
-            subject: data.subject,
-            successRate: data.successRate,
-            timerSeconds: data.timer ? data.timer * 60 : null,
-          }),
-        });
+  try {
+    if (data.id) {
+      // ✅ MODIFICATION — code de ta copine
+      await fetch(`${API_BASE_URL}/qcms/${data.id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/merge-patch+json",
+        },
+        body: JSON.stringify({
+          title: data.title,
+          subject: data.subject,
+          successRate: data.successRate,
+          timerSeconds: data.timer ? data.timer * 60 : null,
+        }),
+      });
 
-        setQuizzes((prev) =>
-            prev.map((q) =>
-                q.id === data.id
-                    ? { ...q, title: data.title, subject: data.subject, successRate: data.successRate, timer: data.timer }
-                    : q
-            )
-        );
+      setQuizzes((prev) =>
+        prev.map((q) =>
+          q.id === data.id
+            ? { ...q, title: data.title, subject: data.subject, successRate: data.successRate, timer: data.timer }
+            : q
+        )
+      );
 
-        alert("✅ Quiz modifié avec succès");
+    } else {
+      // ✅ CRÉATION — ton code avec await correct
+      const qcmRes = await fetch(`${API_BASE_URL}/qcms`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/ld+json",
+        },
+        body: JSON.stringify({
+          title: data.title,
+          subject: data.subject,
+          successRate: data.successRate,
+          timerSeconds: data.timer ? data.timer * 60 : null,
+          status: "draft",
+          author: "/api/users/1",
+        }),
+      });
 
-      } else {
-        // ➕ CRÉATION — POST
-        const qcmRes = await fetch(`${API_BASE_URL}/qcms`, {
+      const qcm = await qcmRes.json();
+
+      // ✅ await bloquant — questions + choices créés avant fermeture
+      for (const question of data.questions || []) {
+        const questionRes = await fetch(`${API_BASE_URL}/questions`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/ld+json",
           },
           body: JSON.stringify({
-            title: data.title,
-            subject: data.subject,
-            successRate: data.successRate,
-            timerSeconds: data.timer ? data.timer * 60 : null,
-            status: "draft",
-            author: "/api/users/1",
+            content: question.content,
+            type: question.type || "text",
+            qcm: `/api/qcms/${qcm.id}`,
           }),
         });
 
-        const qcm = await qcmRes.json();
+        const createdQuestion = await questionRes.json();
 
-        setQuizzes((prev) => [
-          {
-            id: qcm.id.toString(),
-            title: data.title,
-            subject: data.subject,
-            questionsCount: data.questions?.length || 0,
-            timer: data.timer,
-            successRate: data.successRate,
-            status: "draft",
-            createdAt: new Date().toISOString(),
-            versionsCount: 1,
-          },
-          ...prev,
-        ]);
-
-        (async () => {
-          for (const question of data.questions || []) {
-            const questionRes = await fetch(`${API_BASE_URL}/questions`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/ld+json",
-              },
-              body: JSON.stringify({
-                content: question.content,
-                type: "text",
-                qcm: `/api/qcms/${qcm.id}`,
-              }),
-            });
-
-            const createdQuestion = await questionRes.json();
-
-            for (const choice of question.choices || []) {
-              await fetch(`${API_BASE_URL}/choices`, {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/ld+json",
-                },
-                body: JSON.stringify({
-                  label: choice.text,
-                  isCorrect: choice.isCorrect === true,
-                  question: `/api/questions/${createdQuestion.id}`,
-                }),
-              });
-            }
-          }
-        })();
-
-        alert("✅ Quiz créé avec succès");
+        for (const choice of question.choices || []) {
+          await fetch(`${API_BASE_URL}/choices`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/ld+json",
+            },
+            body: JSON.stringify({
+              label: choice.text,
+              isCorrect: choice.isCorrect === true,
+              question: `/api/questions/${createdQuestion.id}`,
+            }),
+          });
+        }
       }
 
-      setFormOpen(false);
-
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("❌ Erreur lors de la sauvegarde");
-    } finally {
-      setSaving(false);
+      // ✅ UI mise à jour APRÈS que tout est sauvegardé
+      setQuizzes((prev) => [
+        {
+          id: qcm.id.toString(),
+          title: data.title,
+          subject: data.subject,
+          questionsCount: data.questions?.length || 0,
+          timer: data.timer,
+          successRate: data.successRate,
+          status: "draft",
+          createdAt: new Date().toISOString(),
+          versionsCount: 1,
+        },
+        ...prev,
+      ]);
     }
-  };
+
+    alert("✅ Quiz sauvegardé avec succès");
+    setFormOpen(false);
+
+  } catch (error) {
+    console.error("Erreur:", error);
+    alert("❌ Erreur lors de la sauvegarde");
+  } finally {
+    setSaving(false);
+  }
+};
+
 
 // const handleSave = async (data) => {
 //   const token = localStorage.getItem("token");

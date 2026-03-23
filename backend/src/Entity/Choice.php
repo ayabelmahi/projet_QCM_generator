@@ -57,10 +57,10 @@ class Choice
         return $this;
     }
 
-    public function isIsCorrect(): ?bool
-    {
-        return $this->isCorrect;
-    }
+    // public function isIsCorrect(): ?bool
+    // {
+    //     return $this->isCorrect;
+    // }
 
     public function setIsCorrect(bool $isCorrect): self
     {
