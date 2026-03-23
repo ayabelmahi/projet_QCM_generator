@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import NotFound from "./pages/NotFound";
+import QuizPage from "./pages/QuizPage";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ function App() {
                             <Dashboard />
                         </PrivateRoute>
                     } />
+                    <Route path="/quiz/:token" element={<QuizPage />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
                 <Toaster />

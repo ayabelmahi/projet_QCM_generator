@@ -12,3 +12,8 @@ controllers:
 api_login_check:
     path: /api/login_check
     methods: [POST]
+    
+quiz_submit:
+    path: /api/quiz/{token}/submit
+    controller: App\Controller\SubmitQuizController
+    methods: [POST]
