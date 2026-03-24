@@ -105,7 +105,47 @@ export function PublishModal({ qcm, open, onOpenChange }) {
       alert("Erreur lors de la publication")
     }
   }
+  const handleGeneratePdf = async () => {
+    try {
+      const token = localStorage.getItem("token")
 
+      const response = await fetch(
+          `http://localhost:8090/api/qcms/${qcm.id}/publish`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              mode: "pdf",
+              copies: pdfCopies,
+            }),
+          }
+      )
+
+      if (!response.ok) {
+        const data = await response.json()
+        alert(data.message || "Erreur lors de la génération du PDF")
+        return
+      }
+
+      const blob = await response.blob()
+      const url  = window.URL.createObjectURL(blob)
+      const a    = document.createElement("a")
+      a.href     = url
+      a.download = `${qcm.title}_PDFs.zip`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+
+      onOpenChange(false)
+    } catch (error) {
+      console.error("Erreur génération PDF :", error)
+      alert("Erreur lors de la génération du PDF")
+    }
+  }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg border-border bg-card p-0">
@@ -273,7 +313,7 @@ export function PublishModal({ qcm, open, onOpenChange }) {
                 </p>
               </div>
 
-              <Button className="gap-2" disabled={hasMultimedia}>
+              <Button className="gap-2" onClick={handleGeneratePdf} disabled={hasMultimedia}>
                 <FileDown className="h-4 w-4" />
                 Générer {pdfCopies} PDF
               </Button>
