@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from "react"
+import { AIGeneratorModal } from "../components/dashboard/AIGeneratorModal"
 
 // Components
 import { SidebarNav } from "../components/dashboard/sidebar-nav"
@@ -36,6 +37,7 @@ export default function DashboardPage() {
   const [candidateQuiz, setCandidateQuiz] = useState(null)
   const [saving, setSaving] = useState(false)
   const originalQuestionIdsRef = React.useRef([])
+  const [aiModalOpen, setAiModalOpen] = useState(false)
 
   const fetchQuizzes = useCallback(async () => {
     setLoading(true)
@@ -503,6 +505,23 @@ export default function DashboardPage() {
     setFormQcm(null)
     setFormOpen(true)
   }
+  const handleAIGenerated = (data) => {
+    setFormQcm({
+      title: data.title,
+      subject: data.subject,
+      questions: data.questions.map((q) => ({
+        id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        content: q.content,
+        type: q.type || "text",
+        choices: q.choices.map((c) => ({
+          id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          text: c.text,
+          isCorrect: c.isCorrect,
+        })),
+      })),
+    })
+    setFormOpen(true)
+  }
 
   if (candidateQuiz) {
     return <CandidateQuiz qcm={candidateQuiz} onBack={() => setCandidateQuiz(null)} />
@@ -528,7 +547,8 @@ export default function DashboardPage() {
           title={config.title}
           subtitle={config.subtitle}
           onCreateQuiz={handleCreate}
-          onCreateWithAI={() => console.log("Créer avec IA")}
+          //onCreateWithAI={() => console.log("Créer avec IA")}
+          onCreateWithAI={() => setAiModalOpen(true)}
           onNavigate={setActivePage}
         />
 
@@ -637,6 +657,11 @@ export default function DashboardPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onConfirm={handleConfirmDelete}
+      />
+      <AIGeneratorModal
+          open={aiModalOpen}
+          onOpenChange={setAiModalOpen}
+          onGenerated={handleAIGenerated}
       />
     </div>
   )
