@@ -92,7 +92,7 @@ export default function DashboardPage() {
 
     try {
       if (data.id) {
-        // ── PATCH le QCM ──────────────────────────────────────────────────
+        // ── PATCH le QCM ────────────────────────────────────────────────────
         await fetch(`${API_BASE_URL}/qcms/${data.id}`, {
           method: "PATCH",
           headers: {
@@ -107,10 +107,10 @@ export default function DashboardPage() {
           }),
         });
 
-        // ── PATCH questions existantes + POST nouvelles ───────────────────
+        // ── PATCH questions existantes + POST nouvelles ─────────────────────
         for (const question of data.questions || []) {
           if (question.apiId) {
-            // PATCH question existante
+            // ✅ PATCH question existante
             await fetch(`${API_BASE_URL}/questions/${question.apiId}`, {
               method: "PATCH",
               headers: {
@@ -123,7 +123,7 @@ export default function DashboardPage() {
               }),
             });
 
-            // PATCH choices existants + POST nouveaux choices
+            // ✅ PATCH choices existants + POST nouveaux choices
             for (const choice of question.choices || []) {
               if (choice.apiId) {
                 // PATCH choice existant
@@ -139,7 +139,7 @@ export default function DashboardPage() {
                   }),
                 });
               } else {
-                // ✅ POST nouveau choice dans question existante
+                // POST nouveau choice dans question existante
                 await fetch(`${API_BASE_URL}/choices`, {
                   method: "POST",
                   headers: {
@@ -153,6 +153,28 @@ export default function DashboardPage() {
                   }),
                 });
               }
+            }
+
+            // ✅ DELETE choices supprimés — après la boucle choices
+            const originalQuestion = (formQcm?.questions || [])
+              .find(q => String(q.apiId) === String(question.apiId));
+
+            const originalChoiceIds = (originalQuestion?.choices || [])
+              .map(c => String(c.apiId))
+              .filter(Boolean);
+
+            const currentChoiceIds = (question.choices || [])
+              .map(c => String(c.apiId))
+              .filter(Boolean);
+
+            const deletedChoiceIds = originalChoiceIds
+              .filter(id => !currentChoiceIds.includes(id));
+
+            for (const id of deletedChoiceIds) {
+              await fetch(`${API_BASE_URL}/choices/${id}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+              });
             }
 
           } else {
@@ -189,21 +211,16 @@ export default function DashboardPage() {
             }
           }
         }
-        console.log("originalQuestionIdsRef:", originalQuestionIdsRef.current)
-        console.log("data.questions:", data.questions.map(q => ({ id: q.id, apiId: q.apiId, content: q.content })))
 
-        // ── DELETE questions supprimées ───────────────────────────────────
-        // const originalIds = (formQcm?.questions || [])
-        //   .map(q => q.apiId)
-        //   .filter(Boolean)
-        const originalIds = originalQuestionIdsRef.current.map(id => String(id))
+        // ── DELETE questions supprimées ──────────────────────────────────────
+        const originalIds = originalQuestionIdsRef.current.map(id => String(id));
 
         const currentIds = (data.questions || [])
           .map(q => q.apiId)
           .filter(Boolean)
-          .map(id => String(id))
+          .map(id => String(id));
 
-        const deletedIds = originalIds.filter(id => !currentIds.includes(id))
+        const deletedIds = originalIds.filter(id => !currentIds.includes(id));
 
         for (const id of deletedIds) {
           await fetch(`${API_BASE_URL}/questions/${id}`, {
@@ -212,7 +229,7 @@ export default function DashboardPage() {
           });
         }
 
-        // ── Update UI ─────────────────────────────────────────────────────
+        // ── Update UI ────────────────────────────────────────────────────────
         setQuizzes((prev) =>
           prev.map((q) =>
             q.id === data.id
@@ -229,7 +246,7 @@ export default function DashboardPage() {
         );
 
       } else {
-        // ── CRÉATION ──────────────────────────────────────────────────────
+        // ── CRÉATION ────────────────────────────────────────────────────────
         const qcmRes = await fetch(`${API_BASE_URL}/qcms`, {
           method: "POST",
           headers: {
@@ -280,6 +297,7 @@ export default function DashboardPage() {
           }
         }
 
+        // ✅ UI mise à jour APRÈS que tout est sauvegardé
         setQuizzes((prev) => [
           {
             id: qcm.id.toString(),
@@ -296,13 +314,13 @@ export default function DashboardPage() {
         ]);
       }
 
-      alert(" Quiz sauvegardé avec succès");
-      originalQuestionIdsRef.current = [] //  reset après sauvegarde
-      setFormOpen(false)
+      alert("✅ Quiz sauvegardé avec succès");
+      originalQuestionIdsRef.current = [];
+      setFormOpen(false);
 
     } catch (error) {
       console.error("Erreur:", error);
-      alert(" Erreur lors de la sauvegarde");
+      alert("❌ Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
     }
@@ -313,7 +331,7 @@ export default function DashboardPage() {
   //   const token = localStorage.getItem("token");
 
   //   try
-  //     // 1️⃣ créer QCM
+  //     //  créer QCM
   //     const qcmRes = await fetch(`${API_BASE_URL}/qcms`, {
   //       method: "POST",
   //       headers: {
