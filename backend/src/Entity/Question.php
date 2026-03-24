@@ -122,6 +122,7 @@ class Question
         }
         return $this;
     }
+    #[Groups(['qcm:read'])]
     public function getVersion(): ?QcmVersion
     {
         return $this->version;
@@ -131,5 +132,10 @@ class Question
     {
         $this->version = $version;
         return $this;
+    }
+    #[Groups(['qcm:read'])]
+    public function getVersionId(): ?int
+    {
+        return $this->version?->getId();
     }
 }
