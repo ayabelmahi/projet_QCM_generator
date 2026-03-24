@@ -64,8 +64,25 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
       setHasTimer(!!qcm.timer)
       setTimer(qcm.timer || 30)
       setSuccessRate(qcm.successRate || 50)
-      //setQuestions(qcm.questions?.length > 0 ? qcm.questions : [defaultQuestion()])
-      setQuestions(qcm.questions === null ? [] : qcm.questions?.length > 0 ? qcm.questions : [defaultQuestion()])
+
+      // ✅ Normalise les questions depuis l'API
+      const normalizedQuestions = qcm.questions?.length > 0
+        ? qcm.questions.filter(q => q.versionId === undefined).map(q => ({
+
+          id: q.id || `q-${Date.now()}`,
+          apiId: q.id, // ← garde l'id API pour le PATCH
+          type: q.type || "text",
+          content: q.content || "",
+          choices: q.choices?.map(c => ({
+            id: c.id || `c-${Date.now()}`,
+            apiId: c.id, // ← garde l'id API pour le PATCH
+            text: c.label || c.text || "", // ← API retourne "label"
+            isCorrect: c.correct ?? c.isCorrect ?? false, // ← API retourne "correct"
+          })) || []
+        }))
+        : [defaultQuestion()]
+
+      setQuestions(normalizedQuestions)
     } else if (open) {
       setTitle("")
       setSubject("")
@@ -180,7 +197,7 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
                 </div>
 
                 {/* <div> */}
-                  {/* <Label className="text-sm text-card-foreground">Nombre de versions</Label>
+                {/* <Label className="text-sm text-card-foreground">Nombre de versions</Label>
                   <Input
                     type="number"
                     min={1}
@@ -267,8 +284,8 @@ export function QCMFormModal({ qcm, open, onOpenChange, onSave }) {
                                 type="button"
                                 onClick={() => updateQuestion(qIdx, { type: opt.value })}
                                 className={`flex items-center gap-1 px-2.5 py-1.5 text-xs transition-colors first:rounded-l-lg last:rounded-r-lg ${question.type === opt.value
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "text-muted-foreground hover:text-foreground"
                                   }`}
                               >
                                 <Icon className="h-3.5 w-3.5" />

@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\ChoiceRepository;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -20,15 +19,15 @@ class Choice
 
     #[ORM\ManyToOne(inversedBy: 'choices')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Question $question = null; // Un choix appartient à une question
+    private ?Question $question = null;
 
     #[ORM\Column(type: 'text')]
     #[Groups(['qcm:read'])]
-    private ?string $label = null; // Le texte de la réponse
+    private ?string $label = null;
 
     #[ORM\Column]
     #[Groups(['qcm:read'])]
-    private ?bool $isCorrect = false; // Définit si c'est la bonne réponse
+    private ?bool $isCorrect = false;
 
     public function getId(): ?int
     {
@@ -57,17 +56,14 @@ class Choice
         return $this;
     }
 
-    public function isIsCorrect(): ?bool
-    {
-        return $this->isCorrect;
-    }
-
     public function setIsCorrect(bool $isCorrect): self
     {
         $this->isCorrect = $isCorrect;
         return $this;
     }
 
+    // ✅ Groups sur le getter — obligatoire pour API Platform
+    #[Groups(['qcm:read'])]
     public function isCorrect(): ?bool
     {
         return $this->isCorrect;
