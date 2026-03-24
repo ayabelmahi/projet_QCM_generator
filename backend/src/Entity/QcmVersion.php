@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity]
 class QcmVersion
@@ -11,6 +13,15 @@ class QcmVersion
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    
+    #[ORM\OneToMany(
+        mappedBy: 'version',
+        targetEntity: Question::class,
+        cascade: ['remove'],      
+        orphanRemoval: true
+    )]
+    private Collection $questions;
 
     #[ORM\ManyToOne(targetEntity: Qcm::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -31,6 +42,7 @@ class QcmVersion
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->questions = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -90,6 +102,34 @@ class QcmVersion
     public function setCreatedAt(\DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
+        return $this;
+    }
+    /**
+     * @return Collection<int, Question>
+     */
+    public function getQuestions(): Collection
+    {
+        return $this->questions;
+    }
+
+    public function addQuestion(Question $question): self
+    {
+        if (!$this->questions->contains($question)) {
+            $this->questions->add($question);
+            $question->setVersion($this);
+        }
+
+        return $this;
+    }
+
+    public function removeQuestion(Question $question): self
+    {
+        if ($this->questions->removeElement($question)) {
+            if ($question->getVersion() === $this) {
+                $question->setVersion(null);
+            }
+        }
+
         return $this;
     }
 }

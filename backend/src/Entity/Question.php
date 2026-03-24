@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use App\Entity\QcmVersion;
 
 #[ORM\Entity(repositoryClass: QuestionRepository::class)]
 #[ApiResource]
@@ -23,6 +24,10 @@ class Question
     #[ORM\ManyToOne(inversedBy: 'questions')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Qcm $qcm = null;
+
+    #[ORM\ManyToOne(targetEntity: QcmVersion::class, inversedBy: 'questions')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?QcmVersion $version = null;
 
     #[ORM\Column(length: 50)]
     #[Groups(['qcm:read'])]
@@ -44,26 +49,60 @@ class Question
         $this->choices = new ArrayCollection();
     }
 
-    public function getId(): ?int { return $this->id; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 
-    public function getQcm(): ?Qcm { return $this->qcm; }
+    public function getQcm(): ?Qcm
+    {
+        return $this->qcm;
+    }
 
-    public function setQcm(?Qcm $qcm): self { $this->qcm = $qcm; return $this; }
+    public function setQcm(?Qcm $qcm): self
+    {
+        $this->qcm = $qcm;
+        return $this;
+    }
 
-    public function getType(): ?string { return $this->type; }
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
 
-    public function setType(string $type): self { $this->type = $type; return $this; }
+    public function setType(string $type): self
+    {
+        $this->type = $type;
+        return $this;
+    }
 
-    public function getContent(): ?string { return $this->content; }
+    public function getContent(): ?string
+    {
+        return $this->content;
+    }
 
-    public function setContent(string $content): self { $this->content = $content; return $this; }
+    public function setContent(string $content): self
+    {
+        $this->content = $content;
+        return $this;
+    }
 
-    public function getMediaUrl(): ?string { return $this->mediaUrl; }
+    public function getMediaUrl(): ?string
+    {
+        return $this->mediaUrl;
+    }
 
-    public function setMediaUrl(?string $mediaUrl): self { $this->mediaUrl = $mediaUrl; return $this; }
+    public function setMediaUrl(?string $mediaUrl): self
+    {
+        $this->mediaUrl = $mediaUrl;
+        return $this;
+    }
 
     /** @return Collection<int, Choice> */
-    public function getChoices(): Collection { return $this->choices; }
+    public function getChoices(): Collection
+    {
+        return $this->choices;
+    }
 
     public function addChoice(Choice $choice): self
     {
@@ -77,8 +116,26 @@ class Question
     public function removeChoice(Choice $choice): self
     {
         if ($this->choices->removeElement($choice)) {
-            if ($choice->getQuestion() === $this) { $choice->setQuestion(null); }
+            if ($choice->getQuestion() === $this) {
+                $choice->setQuestion(null);
+            }
         }
         return $this;
+    }
+    #[Groups(['qcm:read'])]
+    public function getVersion(): ?QcmVersion
+    {
+        return $this->version;
+    }
+
+    public function setVersion(?QcmVersion $version): self
+    {
+        $this->version = $version;
+        return $this;
+    }
+    #[Groups(['qcm:read'])]
+    public function getVersionId(): ?int
+    {
+        return $this->version?->getId();
     }
 }

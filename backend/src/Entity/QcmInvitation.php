@@ -3,8 +3,23 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use App\Controller\GetQuizByTokenController;
+use App\Repository\QcmInvitationRepository;
+use App\Entity\QcmVersion;
+use App\Entity\Qcm;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: QcmInvitationRepository::class)]
+#[ApiResource(
+    operations: [
+        new Get(
+            uriTemplate: '/quiz/{token}',
+            controller: GetQuizByTokenController::class,
+            read: false
+        )
+    ]
+)]
 class QcmInvitation
 {
     #[ORM\Id]
@@ -12,7 +27,7 @@ class QcmInvitation
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 64)]
+    #[ORM\Column(unique: true)]
     private string $token;
 
     #[ORM\ManyToOne(targetEntity: Qcm::class)]
@@ -87,4 +102,32 @@ class QcmInvitation
         $this->candidateName = $name;
         return $this;
     }
+    public function getCandidateEmail(): ?string
+    {
+        return $this->candidateEmail;
+    }
+
+    public function getCandidateName(): ?string
+    {
+        return $this->candidateName;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    
+    
 }
