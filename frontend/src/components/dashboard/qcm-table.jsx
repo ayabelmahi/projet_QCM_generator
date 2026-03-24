@@ -173,9 +173,9 @@ export function QCMTable({quizzes, onView, onEdit, onDelete, onPublish, onStats}
                                                 <p className="text-sm font-medium text-card-foreground">
                                                     {qcm.title}
                                                 </p>
-                                                <p className="text-xs text-muted-foreground">
+                                                {/* <p className="text-xs text-muted-foreground">
                                                     {qcm.versionsCount || 1} version(s)
-                                                </p>
+                                                </p> */}
                                             </div>
                                         </TableCell>
 
