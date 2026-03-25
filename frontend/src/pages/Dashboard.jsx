@@ -17,10 +17,7 @@ import { StatisticsPage } from "../components/dashboard/statistics-page"
 import { CandidateQuiz } from "../components/dashboard/candidate-quiz"
 
 const API_BASE_URL = "http://localhost:8090/api"
-const handleUnauthorized = () => {
-  localStorage.clear()
-  window.location.href = "/login"
-}
+
 export default function DashboardPage() {
   const [activePage, setActivePage] = useState("dashboard")
   const [quizzes, setQuizzes] = useState([])
@@ -56,11 +53,6 @@ export default function DashboardPage() {
           Accept: "application/ld+json",
         },
       })
-      if (response.status === 401) {
-        handleUnauthorized()
-        return
-      }
-
 
       if (response.ok) {
         const data = await response.json()
@@ -279,7 +271,6 @@ export default function DashboardPage() {
         });
 
         const qcm = await qcmRes.json();
-        if (qcmRes.status === 401) { handleUnauthorized(); return; }
 
         for (const question of data.questions || []) {
           const questionRes = await fetch(`${API_BASE_URL}/questions`, {
@@ -441,7 +432,6 @@ export default function DashboardPage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (response.status === 401) { handleUnauthorized(); return; }
 
       if (response.ok) {
         setQuizzes(quizzes.filter((q) => q.id !== deleteQcm.id))
@@ -467,25 +457,21 @@ export default function DashboardPage() {
   const handleEdit = async (qcm) => {
     const token = localStorage.getItem("token")
 
-      setFormQcm({ ...qcm, questions: null })
-      setFormOpen(true)
+    setFormQcm({ ...qcm, questions: null })
+    setFormOpen(true)
 
-      try {
-        const res = await fetch(`${API_BASE_URL}/qcms/${qcm.id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/ld+json"
-          }
-        })
-        if (res.status === 401) {
-          handleUnauthorized()
-          return
+    try {
+      const res = await fetch(`${API_BASE_URL}/qcms/${qcm.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/ld+json"
         }
-        const data = await res.json()
+      })
+      const data = await res.json()
 
-        const questionsWithChoices = (data.questions || [])
-          .filter(q => q.versionId === undefined) // ✅ filtre originales
-          .map((q) => ({
+      const questionsWithChoices = (data.questions || [])
+        .filter(q => q.versionId === undefined) // ✅ filtre originales
+        .map((q) => ({
           id: q.id.toString(),
           apiId: q.id, // ✅ pour le PATCH
           content: q.content || "",

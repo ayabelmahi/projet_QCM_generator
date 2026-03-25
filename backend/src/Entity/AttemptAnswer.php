@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity]
 class AttemptAnswer
@@ -12,7 +13,7 @@ class AttemptAnswer
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: QcmAttempt::class)]
+    #[ORM\ManyToOne(targetEntity: QcmAttempt::class, inversedBy: 'answers')]
     #[ORM\JoinColumn(nullable: false)]
     private ?QcmAttempt $attempt = null;
 
@@ -35,9 +36,39 @@ class AttemptAnswer
         $this->answeredAt = new \DateTimeImmutable();
     }
 
+    #[Groups(['attempt:read'])]
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    #[Groups(['attempt:read'])]
+    public function getIsCorrect(): bool
+    {
+        return $this->isCorrect;
+    }
+
+    #[Groups(['attempt:read'])]
+    public function getQuestion(): ?Question
+    {
+        return $this->question;
+    }
+
+    #[Groups(['attempt:read'])]
+    public function getChoice(): ?Choice
+    {
+        return $this->choice;
+    }
+
+    #[Groups(['attempt:read'])]
+    public function getAnsweredAt(): \DateTimeImmutable
+    {
+        return $this->answeredAt;
+    }
+
+    public function getAttempt(): ?QcmAttempt
+    {
+        return $this->attempt;
     }
 
     public function setAttempt(QcmAttempt $attempt): self

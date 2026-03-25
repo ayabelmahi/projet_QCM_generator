@@ -18,7 +18,7 @@ class Question
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['qcm:read'])]
+    #[Groups(['qcm:read', 'attempt:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'questions')]
@@ -76,6 +76,7 @@ class Question
         return $this;
     }
 
+    #[Groups(['qcm:read', 'attempt:read'])]
     public function getContent(): ?string
     {
         return $this->content;
