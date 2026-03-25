@@ -17,7 +17,10 @@ import { StatisticsPage } from "../components/dashboard/statistics-page"
 import { CandidateQuiz } from "../components/dashboard/candidate-quiz"
 
 const API_BASE_URL = "http://localhost:8090/api"
-
+const handleUnauthorized = () => {
+  localStorage.clear()
+  window.location.href = "/login"
+}
 export default function DashboardPage() {
   const [activePage, setActivePage] = useState("dashboard")
   const [quizzes, setQuizzes] = useState([])
@@ -38,6 +41,25 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false)
   const originalQuestionIdsRef = React.useRef([])
   const [aiModalOpen, setAiModalOpen] = useState(false)
+  const [attempts, setAttempts] = useState([])
+  const [selectedAttempt, setSelectedAttempt] = useState(null)
+
+  // APRÈS
+  useEffect(() => {
+    if (activePage !== "results") return
+    if (loading) return  // ← attendre que le dashboard soit chargé
+    fetch("http://localhost:8090/api/qcm_attempts", {
+      headers: { Accept: "application/ld+json" }
+    })
+      .then(r => r.json())
+      .then(data => {
+        console.log("Data complète:", data)
+        const list = data["hydra:member"] || data["member"] || []
+        console.log("Attempts trouvés:", list.length)
+        setAttempts(list)
+      })
+      .catch(err => console.error("Erreur:", err))
+  }, [activePage, loading])
 
   const fetchQuizzes = useCallback(async (silent = false) => {
     // setLoading(true)
@@ -53,6 +75,11 @@ export default function DashboardPage() {
           Accept: "application/ld+json",
         },
       })
+      if (response.status === 401) {
+        handleUnauthorized()
+        return
+      }
+
 
       if (response.ok) {
         const data = await response.json()
@@ -271,6 +298,7 @@ export default function DashboardPage() {
         });
 
         const qcm = await qcmRes.json();
+        if (qcmRes.status === 401) { handleUnauthorized(); return; }
 
         for (const question of data.questions || []) {
           const questionRes = await fetch(`${API_BASE_URL}/questions`, {
@@ -432,6 +460,7 @@ export default function DashboardPage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })
+      if (response.status === 401) { handleUnauthorized(); return; }
 
       if (response.ok) {
         setQuizzes(quizzes.filter((q) => q.id !== deleteQcm.id))
@@ -467,6 +496,10 @@ export default function DashboardPage() {
           Accept: "application/ld+json"
         }
       })
+      if (res.status === 401) {
+        handleUnauthorized()
+        return
+      }
       const data = await res.json()
 
       const questionsWithChoices = (data.questions || [])
@@ -557,8 +590,8 @@ export default function DashboardPage() {
     <div className="flex min-h-screen bg-white">
       <SidebarNav activePage={activePage} onNavigate={setActivePage} />
 
-      // ✅ Après
-      <div className="ml-64 flex flex-1 flex-col bg-gray-50/50 overflow-y-auto">
+
+      <div className="ml-64 flex flex-1 flex-col bg-gray-50/50">
         <TopHeader
           title={config.title}
           subtitle={config.subtitle}
@@ -621,31 +654,111 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+              {/* REsultttt */}
 
               {activePage === "results" && (
                 <div className="flex flex-col gap-6">
                   <p className="text-sm text-gray-500">
-                    Sélectionnez un quiz publié pour simuler l'expérience candidat :
+                    Sélectionnez un candidat pour voir ses réponses et résultats :
                   </p>
-
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {quizzes
-                      .filter((q) => q.status === "published")
-                      .map((qcm) => (
-                        <div
-                          key={qcm.id}
-                          className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
-                          onClick={() => setCandidateQuiz(qcm)}
-                        >
-                          <h3 className="text-base font-semibold text-gray-900">{qcm.title}</h3>
-                          <p className="mt-2 text-sm text-gray-500">{qcm.subject}</p>
-                          <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
-                            <span>{qcm.questionsCount} questions</span>
-                            <span>{qcm.timer ? `${qcm.timer} min` : "--"}</span>
+                    {attempts.map((attempt) => (
+                      <div
+                        key={attempt.id}
+                        onClick={() => setSelectedAttempt(attempt)}
+                        className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                      >
+                        <p className="font-semibold text-gray-900">{attempt.candidateName}</p>
+                        <p className="text-sm text-gray-500 mb-3">{attempt.candidateEmail}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">
+                            Score : <span className="font-semibold text-gray-800">{attempt.score ?? "--"}</span>
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${attempt.passed
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                            }`}>
+                            {attempt.passed ? "Reçu" : "Échoué"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                          Quiz : {attempt.qcm?.title ?? "--"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {selectedAttempt && (
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                      <div className="bg-white rounded-2xl p-6 w-[560px] max-h-[80vh] overflow-y-auto shadow-xl">
+
+                        {/* Header */}
+                        <div className="flex justify-between items-start mb-6">
+                          <div>
+                            <h2 className="text-xl font-semibold text-gray-900">{selectedAttempt.candidateName}</h2>
+                            <p className="text-sm text-gray-500">{selectedAttempt.candidateEmail}</p>
+                          </div>
+                          <button
+                            onClick={() => setSelectedAttempt(null)}
+                            className="text-gray-400 hover:text-gray-600 transition text-lg font-medium"
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="flex gap-4 mb-6">
+                          <div className="bg-gray-50 rounded-xl p-4 text-center flex-1">
+                            <p className="text-3xl font-bold text-blue-600">{selectedAttempt.score ?? "--"}</p>
+                            <p className="text-xs text-gray-500 mt-1">Score</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-4 text-center flex-1">
+                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedAttempt.passed
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                              }`}>
+                              {selectedAttempt.passed ? "Reçu" : "Échoué"}
+                            </span>
+                            <p className="text-xs text-gray-500 mt-2">Résultat</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-4 text-center flex-1">
+                            <p className="text-sm font-semibold text-gray-700">{selectedAttempt.qcm?.title ?? "--"}</p>
+                            <p className="text-xs text-gray-500 mt-1">Quiz</p>
                           </div>
                         </div>
-                      ))}
-                  </div>
+
+                        {/* Réponses */}
+                        <h3 className="font-semibold text-gray-700 mb-3">Réponses</h3>
+                        <div className="space-y-3">
+                          {(selectedAttempt.answers || []).map((ans, i) => (
+                            <div
+                              key={ans.id}
+                              className={`rounded-lg p-3 text-sm border ${ans.isCorrect
+                                  ? "border-green-200 bg-green-50"
+                                  : "border-red-200 bg-red-50"
+                                }`}
+                            >
+                              <p className="font-medium text-gray-700 mb-1">
+                                Q{i + 1} : {ans.question?.content ?? "Question"}
+                              </p>
+                              <div className="flex items-center justify-between">
+                                <p className="text-gray-500">
+                                  Réponse : {ans.choice?.label ?? "--"}
+                                </p>
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${ans.isCorrect
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                  }`}>
+                                  {ans.isCorrect ? "Correct" : "Incorrect"}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
