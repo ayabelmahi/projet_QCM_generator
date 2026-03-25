@@ -18,7 +18,9 @@ class GetQuizByTokenController
         if (!$invitation) {
             return new JsonResponse(['message' => 'Invitation introuvable'], 404);
         }
-
+        if ($invitation->getStatus() === 'completed') {
+            return new JsonResponse(['message' => 'Ce lien a déjà été utilisé'], 403);
+        }
         $version = $invitation->getVersion();
 
         if (!$version) {
