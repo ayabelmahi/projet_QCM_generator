@@ -85,6 +85,7 @@ class SubmitQuizController
         $attempt->setScore($score);
         $attempt->setPassed($passed);
 
+        $invitation->setStatus('completed');
         $this->em->flush();
 
         return new JsonResponse([
