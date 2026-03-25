@@ -35,7 +35,7 @@ class Qcm
 
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['qcm:read'])]
+    #[Groups(['qcm:read', 'attempt:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'qcms')]
@@ -43,7 +43,7 @@ class Qcm
     private ?User $author = null; // Un QCM appartient à 1 user
 
     #[ORM\Column(length: 255)]
-    #[Groups(['qcm:read'])]
+   #[Groups(['qcm:read', 'attempt:read'])]
     private ?string $title = null; // Titre du QCM
 
     #[ORM\Column(length: 255)]

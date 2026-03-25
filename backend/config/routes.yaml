@@ -21,3 +21,7 @@ ai_generate_qcm:
     path: /api/ai/generate-qcm
     controller: App\Controller\AiGenerateQcmController
     methods: [POST]
+quiz_direct:
+    path: /api/quiz/direct/{id}
+    controller: App\Controller\GetQuizDirectController
+    methods: [GET]
