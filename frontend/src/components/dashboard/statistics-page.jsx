@@ -46,18 +46,18 @@ export function StatisticsPage({ quizzes = [] }) {
   const avgSuccessRate =
     filteredQuizzes.length > 0
       ? Math.round(
-          filteredQuizzes.reduce((acc, q) => acc + (q.successRate || 0), 0) /
-            filteredQuizzes.length
-        )
+        filteredQuizzes.reduce((acc, q) => acc + (q.successRate || 0), 0) /
+        filteredQuizzes.length
+      )
       : 0
 
   const timedQuizzes = filteredQuizzes.filter((q) => q.timer)
   const avgTimer =
     timedQuizzes.length > 0
       ? Math.round(
-          timedQuizzes.reduce((acc, q) => acc + (q.timer || 0), 0) /
-            timedQuizzes.length
-        )
+        timedQuizzes.reduce((acc, q) => acc + (q.timer || 0), 0) /
+        timedQuizzes.length
+      )
       : 0
 
   const publicationRate =
@@ -78,16 +78,10 @@ export function StatisticsPage({ quizzes = [] }) {
   }, [filteredQuizzes])
 
   const successOverTime = useMemo(() => {
-    return [...filteredQuizzes]
-      .filter((q) => q.createdAt)
-      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-      .map((q) => ({
-        date: new Date(q.createdAt).toLocaleDateString("fr-FR", {
-          month: "short",
-          year: "2-digit",
-        }),
-        rate: q.successRate || 0,
-      }))
+    return filteredQuizzes.map((q, index) => ({
+      date: `Quiz ${index + 1}`,
+      rate: q.successRate || 0,
+    }))
   }, [filteredQuizzes])
 
   const kpis = [
