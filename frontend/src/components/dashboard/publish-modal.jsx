@@ -273,7 +273,7 @@ export function PublishModal({ qcm, open, onOpenChange, onSuccess }) {
 
                 {/* Liste candidats ajoutés */}
                 {candidates.length > 0 && (
-                  <div className="mt-3 flex flex-col gap-1.5">
+                    <div className="mt-3 flex flex-col gap-1.5 max-h-16 overflow-y-auto">
                     {candidates.map((c, idx) => (
                       <div
                         key={idx}
