@@ -87,13 +87,16 @@ export default function DashboardPage() {
           id: q.id.toString(),
           title: q.title,
           subject: q.subject,
-          questionsCount: q.questions?.filter(q => !q.version_id)?.length || 0, // ← compte originales seulement
+          //questionsCount: q.questions?.filter(q => !q.version_id)?.length || 0,
+          // ← compte originales seulement
+          questionsCount: q.questions?.filter(quest => quest.versionId === undefined || quest.versionId === null)?.length || 0,
           timer: q.timerSeconds ? Math.floor(q.timerSeconds / 60) : null,
           successRate: q.successRate || 50,
           status: q.status || "draft",
           createdAt: q.createdAt || "",
           // ✅ Filtre uniquement les questions originales (version null)
-          questions: q.questions?.filter(quest => quest.versionId === undefined) || [],
+          //questions: q.questions?.filter(quest => quest.versionId === undefined) || [],
+          questions: q.questions?.filter(quest => quest.versionId === undefined || quest.versionId === null) || [],
           versionsCount: q.versionsCount || 1,
         }))
 
