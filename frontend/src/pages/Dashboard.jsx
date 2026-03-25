@@ -41,6 +41,22 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false)
   const originalQuestionIdsRef = React.useRef([])
   const [aiModalOpen, setAiModalOpen] = useState(false)
+  const [attempts, setAttempts] = useState([])
+  const [selectedAttempt, setSelectedAttempt] = useState(null)
+  const [searchAttempt, setSearchAttempt] = useState("")
+
+  // APRÈS
+  useEffect(() => {
+    fetch("http://localhost:8090/api/qcm_attempts", {
+      headers: { Accept: "application/ld+json" }
+    })
+      .then(r => r.json())
+      .then(data => {
+        const list = data["hydra:member"] || data["member"] || []
+        setAttempts(list)
+      })
+      .catch(err => console.error("Erreur attempts:", err))
+  }, [])
 
   const fetchQuizzes = useCallback(async (silent = false) => {
     // setLoading(true)
@@ -452,25 +468,25 @@ export default function DashboardPage() {
   const handleEdit = async (qcm) => {
     const token = localStorage.getItem("token")
 
-      setFormQcm({ ...qcm, questions: null })
-      setFormOpen(true)
+    setFormQcm({ ...qcm, questions: null })
+    setFormOpen(true)
 
-      try {
-        const res = await fetch(`${API_BASE_URL}/qcms/${qcm.id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/ld+json"
-          }
-        })
-        if (res.status === 401) {
-          handleUnauthorized()
-          return
+    try {
+      const res = await fetch(`${API_BASE_URL}/qcms/${qcm.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/ld+json"
         }
-        const data = await res.json()
+      })
+      if (res.status === 401) {
+        handleUnauthorized()
+        return
+      }
+      const data = await res.json()
 
-        const questionsWithChoices = (data.questions || [])
-          .filter(q => q.versionId === undefined) // ✅ filtre originales
-          .map((q) => ({
+      const questionsWithChoices = (data.questions || [])
+        .filter(q => q.versionId === undefined) // ✅ filtre originales
+        .map((q) => ({
           id: q.id.toString(),
           apiId: q.id, // ✅ pour le PATCH
           content: q.content || "",
@@ -577,7 +593,7 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-6">
               {activePage === "dashboard" && (
                 <>
-                  <StatsCards quizzes={quizzes} />
+                  <StatsCards quizzes={quizzes} totalParticipants={attempts.length} />
                   <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm overflow-visible">
                     <h3 className="mb-4 text-lg font-bold text-gray-800">Quiz récents</h3>
                     <QCMTable
@@ -621,31 +637,122 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+              {/* REsultttt */}
 
               {activePage === "results" && (
                 <div className="flex flex-col gap-6">
-                  <p className="text-sm text-gray-500">
-                    Sélectionnez un quiz publié pour simuler l'expérience candidat :
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-500">
+                      Sélectionnez un candidat pour voir ses réponses et résultats :
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="Rechercher par quiz ou candidat..."
+                      value={searchAttempt}
+                      onChange={(e) => setSearchAttempt(e.target.value)}
+                      className="border border-gray-200 rounded-lg px-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {quizzes
-                      .filter((q) => q.status === "published")
-                      .map((qcm) => (
+                    {attempts
+                      .filter((a) =>
+                        a.candidateName?.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+                        a.candidateEmail?.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+                        a.qcm?.title?.toLowerCase().includes(searchAttempt.toLowerCase())
+                      )
+                      .map((attempt) => (
                         <div
-                          key={qcm.id}
+                          key={attempt.id}
+                          onClick={() => setSelectedAttempt(attempt)}
                           className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
-                          onClick={() => setCandidateQuiz(qcm)}
                         >
-                          <h3 className="text-base font-semibold text-gray-900">{qcm.title}</h3>
-                          <p className="mt-2 text-sm text-gray-500">{qcm.subject}</p>
-                          <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
-                            <span>{qcm.questionsCount} questions</span>
-                            <span>{qcm.timer ? `${qcm.timer} min` : "--"}</span>
+                          <p className="font-semibold text-gray-900">{attempt.candidateName}</p>
+                          <p className="text-sm text-gray-500 mb-3">{attempt.candidateEmail}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-500">
+                              Score : <span className="font-semibold text-gray-800">{attempt.score ?? "--"}</span>
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${attempt.passed
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                              }`}>
+                              {attempt.passed ? "Reçu" : "Échoué"}
+                            </span>
                           </div>
+                          <p className="text-xs text-gray-400 mt-2">
+                            Quiz : {attempt.qcm?.title ?? "--"}
+                          </p>
                         </div>
                       ))}
                   </div>
+
+                  {selectedAttempt && (
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                      <div className="bg-white rounded-2xl p-6 w-[560px] max-h-[80vh] overflow-y-auto shadow-xl">
+                        <div className="flex justify-between items-start mb-6">
+                          <div>
+                            <h2 className="text-xl font-semibold text-gray-900">{selectedAttempt.candidateName}</h2>
+                            <p className="text-sm text-gray-500">{selectedAttempt.candidateEmail}</p>
+                          </div>
+                          <button
+                            onClick={() => setSelectedAttempt(null)}
+                            className="text-gray-400 hover:text-gray-600 transition text-lg font-medium"
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        <div className="flex gap-4 mb-6">
+                          <div className="bg-gray-50 rounded-xl p-4 text-center flex-1">
+                            <p className="text-3xl font-bold text-blue-600">{selectedAttempt.score ?? "--"}</p>
+                            <p className="text-xs text-gray-500 mt-1">Score</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-4 text-center flex-1">
+                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedAttempt.passed
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                              }`}>
+                              {selectedAttempt.passed ? "Reçu" : "Échoué"}
+                            </span>
+                            <p className="text-xs text-gray-500 mt-2">Résultat</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-4 text-center flex-1">
+                            <p className="text-sm font-semibold text-gray-700">{selectedAttempt.qcm?.title ?? "--"}</p>
+                            <p className="text-xs text-gray-500 mt-1">Quiz</p>
+                          </div>
+                        </div>
+
+                        <h3 className="font-semibold text-gray-700 mb-3">Réponses</h3>
+                        <div className="space-y-3">
+                          {(selectedAttempt.answers || []).map((ans, i) => (
+                            <div
+                              key={ans.id}
+                              className={`rounded-lg p-3 text-sm border ${ans.isCorrect
+                                ? "border-green-200 bg-green-50"
+                                : "border-red-200 bg-red-50"
+                                }`}
+                            >
+                              <p className="font-medium text-gray-700 mb-1">
+                                Q{i + 1} : {ans.question?.content ?? "Question"}
+                              </p>
+                              <div className="flex items-center justify-between">
+                                <p className="text-gray-500">
+                                  Réponse : {ans.choice?.label ?? "--"}
+                                </p>
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${ans.isCorrect
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                                  }`}>
+                                  {ans.isCorrect ? "Correct" : "Incorrect"}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
