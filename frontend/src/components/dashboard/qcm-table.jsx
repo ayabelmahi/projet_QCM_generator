@@ -65,7 +65,7 @@ export function QCMTable({quizzes, onView, onEdit, onDelete, onPublish, onStats}
 
 
     return (
-        <Card className="overflow-hidden border-border/50 bg-card shadow-sm">
+       <Card className="border-border/50 bg-card shadow-sm">
             {/* Filters */}
             <div
                 className="flex flex-col gap-3 border-b border-border/50 p-4 sm:flex-row sm:items-center sm:justify-between">
