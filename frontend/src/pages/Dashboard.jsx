@@ -39,11 +39,14 @@ export default function DashboardPage() {
   const originalQuestionIdsRef = React.useRef([])
   const [aiModalOpen, setAiModalOpen] = useState(false)
 
-  const fetchQuizzes = useCallback(async () => {
-    setLoading(true)
+  const fetchQuizzes = useCallback(async (silent = false) => {
+    // setLoading(true)
+    if (!silent) setLoading(true)
+
     try {
       const token = localStorage.getItem("token")
 
+      // const response = await fetch(`${API_BASE_URL}/qcms?pagination=false`, {
       const response = await fetch(`${API_BASE_URL}/qcms`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -79,7 +82,9 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Erreur API:", error)
     } finally {
-      setLoading(false)
+      /*setLoading(false)*/
+      if (!silent) setLoading(false)
+
     }
   }, [])
 
@@ -316,9 +321,10 @@ export default function DashboardPage() {
         ]);
       }
 
-      alert("✅ Quiz sauvegardé avec succès");
+      // alert("✅ Quiz sauvegardé avec succès");
       originalQuestionIdsRef.current = [];
       setFormOpen(false);
+      fetchQuizzes(true); // ← silent
 
     } catch (error) {
       console.error("Erreur:", error);
@@ -431,6 +437,7 @@ export default function DashboardPage() {
         setQuizzes(quizzes.filter((q) => q.id !== deleteQcm.id))
         setDeleteOpen(false)
         setDeleteQcm(null)
+        fetchQuizzes(true); // ← silent
       }
     } catch (error) {
       console.error("Erreur lors de la suppression:", error)
@@ -500,6 +507,14 @@ export default function DashboardPage() {
     setStatsQcm(qcm)
     setStatsOpen(true)
   }
+  const handlePublishSuccess = () => {
+    setQuizzes(prev => prev.map(q =>
+      q.id === publishQcm?.id
+        ? { ...q, status: "published" }
+        : q
+    ))
+    fetchQuizzes(true)
+  }
 
   const handleCreate = () => {
     setFormQcm(null)
@@ -542,7 +557,8 @@ export default function DashboardPage() {
     <div className="flex min-h-screen bg-white">
       <SidebarNav activePage={activePage} onNavigate={setActivePage} />
 
-      <div className="ml-64 flex flex-1 flex-col bg-gray-50/50">
+      // ✅ Après
+      <div className="ml-64 flex flex-1 flex-col bg-gray-50/50 overflow-y-auto">
         <TopHeader
           title={config.title}
           subtitle={config.subtitle}
@@ -552,7 +568,7 @@ export default function DashboardPage() {
           onNavigate={setActivePage}
         />
 
-        <main className="flex-1 p-8">
+        <main className="p-8">
           {loading ? (
             <div className="flex h-64 items-center justify-center italic text-gray-500">
               Chargement des données
@@ -562,7 +578,7 @@ export default function DashboardPage() {
               {activePage === "dashboard" && (
                 <>
                   <StatsCards quizzes={quizzes} />
-                  <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm overflow-visible">
                     <h3 className="mb-4 text-lg font-bold text-gray-800">Quiz récents</h3>
                     <QCMTable
                       quizzes={quizzes}
@@ -650,8 +666,8 @@ export default function DashboardPage() {
 
       <QCMDetailModal qcm={detailQcm} open={detailOpen} onOpenChange={setDetailOpen} />
       <QCMFormModal qcm={formQcm} open={formOpen} onOpenChange={setFormOpen} onSave={handleSave} />
-      <PublishModal qcm={publishQcm} open={publishOpen} onOpenChange={setPublishOpen} />
-      <StatsModal qcm={statsQcm} open={statsOpen} onOpenChange={setStatsOpen} />
+      {/* <PublishModal qcm={publishQcm} open={publishOpen} onOpenChange={setPublishOpen} /> */}
+      <PublishModal qcm={publishQcm} open={publishOpen} onOpenChange={setPublishOpen} onSuccess={handlePublishSuccess} />      <StatsModal qcm={statsQcm} open={statsOpen} onOpenChange={setStatsOpen} />
       <DeleteDialog
         qcm={deleteQcm}
         open={deleteOpen}
@@ -659,9 +675,9 @@ export default function DashboardPage() {
         onConfirm={handleConfirmDelete}
       />
       <AIGeneratorModal
-          open={aiModalOpen}
-          onOpenChange={setAiModalOpen}
-          onGenerated={handleAIGenerated}
+        open={aiModalOpen}
+        onOpenChange={setAiModalOpen}
+        onGenerated={handleAIGenerated}
       />
     </div>
   )
