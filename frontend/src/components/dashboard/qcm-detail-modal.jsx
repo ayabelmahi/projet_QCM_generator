@@ -93,7 +93,7 @@ export function QCMDetailModal({ qcm, open, onOpenChange }) {
 
           <div className="flex flex-col gap-4">
 
-            {qcm.questions.map((question, idx) => {
+            {(qcm.questions || []).map((question, idx) => {
               const Icon = typeIcons[question.type]
 
               return (
@@ -127,7 +127,7 @@ export function QCMDetailModal({ qcm, open, onOpenChange }) {
 
                   <div className="ml-10 flex flex-col gap-1.5">
 
-                    {question.choices.map((choice) => (
+                    {(question.choices || []).map((choice) => (
                       <div
                         key={choice.id}
                         className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
