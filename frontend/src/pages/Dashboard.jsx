@@ -43,23 +43,20 @@ export default function DashboardPage() {
   const [aiModalOpen, setAiModalOpen] = useState(false)
   const [attempts, setAttempts] = useState([])
   const [selectedAttempt, setSelectedAttempt] = useState(null)
+  const [searchAttempt, setSearchAttempt] = useState("")
 
   // APRÈS
   useEffect(() => {
-    if (activePage !== "results") return
-    if (loading) return  // ← attendre que le dashboard soit chargé
     fetch("http://localhost:8090/api/qcm_attempts", {
       headers: { Accept: "application/ld+json" }
     })
       .then(r => r.json())
       .then(data => {
-        console.log("Data complète:", data)
         const list = data["hydra:member"] || data["member"] || []
-        console.log("Attempts trouvés:", list.length)
         setAttempts(list)
       })
-      .catch(err => console.error("Erreur:", err))
-  }, [activePage, loading])
+      .catch(err => console.error("Erreur attempts:", err))
+  }, [])
 
   const fetchQuizzes = useCallback(async (silent = false) => {
     // setLoading(true)
@@ -610,7 +607,7 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-6">
               {activePage === "dashboard" && (
                 <>
-                  <StatsCards quizzes={quizzes} />
+                  <StatsCards quizzes={quizzes} totalParticipants={attempts.length} />
                   <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm overflow-visible">
                     <h3 className="mb-4 text-lg font-bold text-gray-800">Quiz récents</h3>
                     <QCMTable
@@ -658,41 +655,55 @@ export default function DashboardPage() {
 
               {activePage === "results" && (
                 <div className="flex flex-col gap-6">
-                  <p className="text-sm text-gray-500">
-                    Sélectionnez un candidat pour voir ses réponses et résultats :
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-500">
+                      Sélectionnez un candidat pour voir ses réponses et résultats :
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="Rechercher par quiz ou candidat..."
+                      value={searchAttempt}
+                      onChange={(e) => setSearchAttempt(e.target.value)}
+                      className="border border-gray-200 rounded-lg px-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
+
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {attempts.map((attempt) => (
-                      <div
-                        key={attempt.id}
-                        onClick={() => setSelectedAttempt(attempt)}
-                        className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
-                      >
-                        <p className="font-semibold text-gray-900">{attempt.candidateName}</p>
-                        <p className="text-sm text-gray-500 mb-3">{attempt.candidateEmail}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">
-                            Score : <span className="font-semibold text-gray-800">{attempt.score ?? "--"}</span>
-                          </span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${attempt.passed
+                    {attempts
+                      .filter((a) =>
+                        a.candidateName?.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+                        a.candidateEmail?.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+                        a.qcm?.title?.toLowerCase().includes(searchAttempt.toLowerCase())
+                      )
+                      .map((attempt) => (
+                        <div
+                          key={attempt.id}
+                          onClick={() => setSelectedAttempt(attempt)}
+                          className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                        >
+                          <p className="font-semibold text-gray-900">{attempt.candidateName}</p>
+                          <p className="text-sm text-gray-500 mb-3">{attempt.candidateEmail}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-500">
+                              Score : <span className="font-semibold text-gray-800">{attempt.score ?? "--"}</span>
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${attempt.passed
                               ? "bg-green-100 text-green-700"
                               : "bg-red-100 text-red-700"
-                            }`}>
-                            {attempt.passed ? "Reçu" : "Échoué"}
-                          </span>
+                              }`}>
+                              {attempt.passed ? "Reçu" : "Échoué"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-2">
+                            Quiz : {attempt.qcm?.title ?? "--"}
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-400 mt-2">
-                          Quiz : {attempt.qcm?.title ?? "--"}
-                        </p>
-                      </div>
-                    ))}
+                      ))}
                   </div>
 
                   {selectedAttempt && (
                     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
                       <div className="bg-white rounded-2xl p-6 w-[560px] max-h-[80vh] overflow-y-auto shadow-xl">
-
-                        {/* Header */}
                         <div className="flex justify-between items-start mb-6">
                           <div>
                             <h2 className="text-xl font-semibold text-gray-900">{selectedAttempt.candidateName}</h2>
@@ -706,7 +717,6 @@ export default function DashboardPage() {
                           </button>
                         </div>
 
-                        {/* Stats */}
                         <div className="flex gap-4 mb-6">
                           <div className="bg-gray-50 rounded-xl p-4 text-center flex-1">
                             <p className="text-3xl font-bold text-blue-600">{selectedAttempt.score ?? "--"}</p>
@@ -714,8 +724,8 @@ export default function DashboardPage() {
                           </div>
                           <div className="bg-gray-50 rounded-xl p-4 text-center flex-1">
                             <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedAttempt.passed
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
                               }`}>
                               {selectedAttempt.passed ? "Reçu" : "Échoué"}
                             </span>
@@ -727,15 +737,14 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
-                        {/* Réponses */}
                         <h3 className="font-semibold text-gray-700 mb-3">Réponses</h3>
                         <div className="space-y-3">
                           {(selectedAttempt.answers || []).map((ans, i) => (
                             <div
                               key={ans.id}
                               className={`rounded-lg p-3 text-sm border ${ans.isCorrect
-                                  ? "border-green-200 bg-green-50"
-                                  : "border-red-200 bg-red-50"
+                                ? "border-green-200 bg-green-50"
+                                : "border-red-200 bg-red-50"
                                 }`}
                             >
                               <p className="font-medium text-gray-700 mb-1">
@@ -746,8 +755,8 @@ export default function DashboardPage() {
                                   Réponse : {ans.choice?.label ?? "--"}
                                 </p>
                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${ans.isCorrect
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-red-100 text-red-700"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
                                   }`}>
                                   {ans.isCorrect ? "Correct" : "Incorrect"}
                                 </span>
@@ -755,7 +764,6 @@ export default function DashboardPage() {
                             </div>
                           ))}
                         </div>
-
                       </div>
                     </div>
                   )}
