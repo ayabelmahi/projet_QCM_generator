@@ -139,10 +139,10 @@ export function QCMTable({quizzes, onView, onEdit, onDelete, onPublish, onStats}
                                     className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Statut
                                 </TableHead>
-                                <TableHead
+                                {/* <TableHead
                                     className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Date
-                                </TableHead>
+                                </TableHead> */}
                                 <TableHead
                                     className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Actions
@@ -223,7 +223,7 @@ export function QCMTable({quizzes, onView, onEdit, onDelete, onPublish, onStats}
                                             </Badge>
                                         </TableCell>
 
-                                        <TableCell className="text-sm text-muted-foreground">
+                                        {/* <TableCell className="text-sm text-muted-foreground">
                                             {qcm.createdAt
                                                 ? new Date(qcm.createdAt).toLocaleDateString("fr-FR", {
                                                     day: "numeric",
@@ -231,7 +231,7 @@ export function QCMTable({quizzes, onView, onEdit, onDelete, onPublish, onStats}
                                                     year: "numeric",
                                                 })
                                                 : "--"}
-                                        </TableCell>
+                                        </TableCell> */}
 
                                         <TableCell>
                                             <div className="flex items-center justify-end gap-1">
