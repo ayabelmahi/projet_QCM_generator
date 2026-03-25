@@ -291,7 +291,6 @@ export function QCMTable({quizzes, onView, onEdit, onDelete, onPublish, onStats}
                                                     <TooltipContent>Supprimer</TooltipContent>
                                                 </Tooltip>
 
-                                                {qcm.status === "draft" && (
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
                                                             <Button
@@ -305,7 +304,7 @@ export function QCMTable({quizzes, onView, onEdit, onDelete, onPublish, onStats}
                                                         </TooltipTrigger>
                                                         <TooltipContent>Publier</TooltipContent>
                                                     </Tooltip>
-                                                )}
+
                                             </div>
                                         </TableCell>
                                     </TableRow>
