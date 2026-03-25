@@ -36,7 +36,8 @@ export function StatsModal({ qcm, open, onOpenChange }) {
   const totalCorrectChoices = questions.reduce(
     (acc, question) =>
       acc +
-      (question.choices?.filter((choice) => choice.isCorrect).length || 0),
+      (question.choices?.filter((choice) => choice.isCorrect ?? choice.correct).length || 0),
+
     0
   )
 
@@ -88,7 +89,7 @@ export function StatsModal({ qcm, open, onOpenChange }) {
     rate:
       question.choices?.length > 0
         ? Math.round(
-            ((question.choices.filter((choice) => choice.isCorrect).length || 0) /
+            ((question.choices.filter((choice) => choice.isCorrect ?? choice.correct).length || 0) /
               question.choices.length) *
               100
           )
