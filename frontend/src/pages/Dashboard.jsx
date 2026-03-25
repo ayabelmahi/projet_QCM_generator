@@ -481,6 +481,7 @@ export default function DashboardPage() {
             text: c.label || "",
             isCorrect: c.correct ?? false, // ✅ API retourne "correct"
           }))
+              .sort((a, b) => Number(b.id) - Number(a.id))
         }))
 
       originalQuestionIdsRef.current = questionsWithChoices.map(q => q.apiId)
