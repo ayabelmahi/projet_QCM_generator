@@ -14,6 +14,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: QcmRepository::class)]
 #[ApiResource(
     normalizationContext: ['groups' => ['qcm:read']],
+    paginationEnabled: false,
     operations: [
         new \ApiPlatform\Metadata\Get(),
         new \ApiPlatform\Metadata\GetCollection(),

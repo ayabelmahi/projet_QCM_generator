@@ -35,7 +35,7 @@ import {
   User,
 } from "lucide-react"
 
-export function PublishModal({ qcm, open, onOpenChange }) {
+export function PublishModal({ qcm, open, onOpenChange, onSuccess }) {
   const [candidates, setCandidates] = useState([]) // [{ email, name }]
   const [emailInput, setEmailInput] = useState("")
   const [nameInput, setNameInput] = useState("")
@@ -100,8 +100,9 @@ export function PublishModal({ qcm, open, onOpenChange }) {
         return
       }
 
-      alert("Invitations créées avec succès")
+      // alert("Invitations créées avec succès")
       setCandidates([])
+      onSuccess?.()
       onOpenChange(false)
     } catch (error) {
       console.error("Erreur publication web :", error)
@@ -113,18 +114,18 @@ export function PublishModal({ qcm, open, onOpenChange }) {
       const token = localStorage.getItem("token")
 
       const response = await fetch(
-          `http://localhost:8090/api/qcms/${qcm.id}/publish`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              mode: "pdf",
-              copies: pdfCopies,
-            }),
-          }
+        `http://localhost:8090/api/qcms/${qcm.id}/publish`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mode: "pdf",
+            copies: pdfCopies,
+          }),
+        }
       )
 
       if (!response.ok) {
@@ -134,9 +135,9 @@ export function PublishModal({ qcm, open, onOpenChange }) {
       }
 
       const blob = await response.blob()
-      const url  = window.URL.createObjectURL(blob)
-      const a    = document.createElement("a")
-      a.href     = url
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
       a.download = `${qcm.title}_PDFs.zip`
       document.body.appendChild(a)
       a.click()
