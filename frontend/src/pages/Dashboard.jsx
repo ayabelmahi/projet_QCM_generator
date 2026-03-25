@@ -312,22 +312,7 @@ export default function DashboardPage() {
             });
           }
         }
-
-        // ✅ UI mise à jour APRÈS que tout est sauvegardé
-        setQuizzes((prev) => [
-          {
-            id: qcm.id.toString(),
-            title: data.title,
-            subject: data.subject,
-            questionsCount: data.questions?.length || 0,
-            timer: data.timer,
-            successRate: data.successRate,
-            status: "draft",
-            createdAt: new Date().toISOString(),
-            versionsCount: 1,
-          },
-          ...prev,
-        ]);
+        await fetchQuizzes(true);
       }
 
       // alert("✅ Quiz sauvegardé avec succès");
