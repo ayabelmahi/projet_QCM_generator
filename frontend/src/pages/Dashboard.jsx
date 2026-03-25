@@ -328,22 +328,7 @@ export default function DashboardPage() {
             });
           }
         }
-
-        // ✅ UI mise à jour APRÈS que tout est sauvegardé
-        setQuizzes((prev) => [
-          {
-            id: qcm.id.toString(),
-            title: data.title,
-            subject: data.subject,
-            questionsCount: data.questions?.length || 0,
-            timer: data.timer,
-            successRate: data.successRate,
-            status: "draft",
-            createdAt: new Date().toISOString(),
-            versionsCount: 1,
-          },
-          ...prev,
-        ]);
+        await fetchQuizzes(true);
       }
 
       // alert("✅ Quiz sauvegardé avec succès");
@@ -512,6 +497,7 @@ export default function DashboardPage() {
             text: c.label || "",
             isCorrect: c.correct ?? false, // ✅ API retourne "correct"
           }))
+              .sort((a, b) => Number(b.id) - Number(a.id))
         }))
 
       originalQuestionIdsRef.current = questionsWithChoices.map(q => q.apiId)

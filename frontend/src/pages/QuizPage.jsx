@@ -240,7 +240,11 @@ export default function QuizPage() {
   useEffect(() => {
     axios.get(`${API_BASE}/api/quiz/${token}`)
       .then(res => { setQuiz({ ...res.data, token }); setPhase("quiz"); })
-      .catch(() => { setError("Invitation introuvable ou expirée."); setPhase("error"); });
+        .catch((err) => {
+          const msg = err.response?.data?.message || "Invitation introuvable ou expirée."
+          setError(msg)
+          setPhase("error")
+        });
   }, [token]);
 
   const handleFinish = (resultData) => { setResult(resultData); setPhase("results"); };
