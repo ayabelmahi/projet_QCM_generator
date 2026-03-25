@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { QRCodeCanvas } from "qrcode.react"
 
 import {
   Dialog,
@@ -60,7 +61,9 @@ export function PublishModal({ qcm, open, onOpenChange }) {
   }
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`https://qsm-gen.app/quiz/${qcm.id}`)
+   // navigator.clipboard.writeText(`https://qsm-gen.app/quiz/${qcm.id}`)
+    //navigator.clipboard.writeText(`${import.meta.env.VITE_APP_URL || 'http://localhost:5173'}/quiz/${qcm.id}`)
+      navigator.clipboard.writeText(`${import.meta.env.VITE_APP_URL || 'http://localhost:5173'}/quiz/direct/${qcm.id}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -180,7 +183,7 @@ export function PublishModal({ qcm, open, onOpenChange }) {
                 <div className="mt-1.5 flex items-center gap-2">
                   <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-muted-foreground">
                     <Link2 className="h-4 w-4 shrink-0" />
-                    <span className="truncate">https://qsm-gen.app/quiz/{qcm.id}</span>
+                      <span className="truncate">{`${import.meta.env.VITE_APP_URL || 'http://localhost:5173'}/quiz/direct/${qcm.id}`}</span>
                   </div>
                   <Button size="sm" variant="outline" className="gap-1.5 border-border" onClick={handleCopyLink}>
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -191,15 +194,36 @@ export function PublishModal({ qcm, open, onOpenChange }) {
 
               {/* QR CODE */}
               <div className="flex items-center gap-4 rounded-xl border border-border/50 bg-background p-4">
-                <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-border bg-muted">
-                  <QrCode className="h-10 w-10 text-muted-foreground/60" />
+                <div id="qr-code-container" className="flex h-20 w-20 items-center justify-center rounded-lg border border-border bg-white p-1">
+                  <QRCodeCanvas
+                      //value={`http://localhost:5173/quiz/${qcm.id}`}
+                      //value={`http://192.168.56.1:5173/quiz/${qcm.id}`}
+                      //value={`${import.meta.env.VITE_APP_URL}/quiz/${qcm.id}`}
+                      value={`${import.meta.env.VITE_APP_URL || 'http://localhost:5173'}/quiz/direct/${qcm.id}`}
+                      //value={`${import.meta.env.VITE_APP_URL || 'http://localhost:5173'}/quiz/${qcm.id}`}
+                      size={72}
+                      level="H"
+                  />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-card-foreground">QR Code</p>
                   <p className="text-xs text-muted-foreground">
                     Scannez ce code pour accéder directement au quiz
                   </p>
-                  <Button variant="link" className="h-auto p-0 text-xs text-primary">
+                  <Button
+                      variant="link"
+                      className="h-auto p-0 text-xs text-primary"
+                      onClick={() => {
+                        const canvas = document.querySelector("#qr-code-container canvas")
+                        if (canvas) {
+                          const url = canvas.toDataURL("image/png")
+                          const a = document.createElement("a")
+                          a.href = url
+                          a.download = `qr-${qcm.title}.png`
+                          a.click()
+                        }
+                      }}
+                  >
                     Télécharger le QR Code
                   </Button>
                 </div>
