@@ -1,7 +1,7 @@
 import { FileText, Users, Target, Clock } from "lucide-react"
 import { Card } from "../ui_dashboard/card"
 
-export function StatsCards({ quizzes }) {
+export function StatsCards({ quizzes, totalParticipants = 0 }) {
   const totalQuizzes = quizzes.length
 
   const published = quizzes.filter((q) => q.status === "published").length
@@ -9,9 +9,9 @@ export function StatsCards({ quizzes }) {
   const avgScore =
     quizzes.length > 0
       ? Math.round(
-          quizzes.reduce((acc, q) => acc + (q.successRate || 0), 0) /
-            quizzes.length
-        )
+        quizzes.reduce((acc, q) => acc + (q.successRate || 0), 0) /
+        quizzes.length
+      )
       : 0
 
   const quizzesWithTimer = quizzes.filter((q) => q.timer)
@@ -19,9 +19,9 @@ export function StatsCards({ quizzes }) {
   const avgTime =
     quizzesWithTimer.length > 0
       ? Math.round(
-          quizzesWithTimer.reduce((acc, q) => acc + (q.timer || 0), 0) /
-            quizzesWithTimer.length
-        )
+        quizzesWithTimer.reduce((acc, q) => acc + (q.timer || 0), 0) /
+        quizzesWithTimer.length
+      )
       : 0
 
   const stats = [
@@ -34,7 +34,7 @@ export function StatsCards({ quizzes }) {
     },
     {
       label: "Participants",
-      value: "342",
+      value: totalParticipants,
       icon: Users,
       color: "text-[hsl(142,71%,45%)]",
       bg: "bg-[hsl(142,71%,45%)]/10",

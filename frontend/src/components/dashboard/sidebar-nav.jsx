@@ -30,6 +30,14 @@ export function SidebarNav({ activePage, onNavigate }) {
     localStorage.clear()
     navigate('/')
   }
+  // AJOUTE ICI
+const handleNavClick = (id) => {
+    if (id === 'results') {
+        navigate('/results')
+    } else {
+        onNavigate(id)
+    }
+}
   return (
       <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col bg-sidebar text-sidebar-foreground">
         <div className="flex items-center gap-3 px-6 py-6">

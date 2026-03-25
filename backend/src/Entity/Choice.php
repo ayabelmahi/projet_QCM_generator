@@ -14,7 +14,7 @@ class Choice
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['qcm:read'])]
+    #[Groups(['qcm:read', 'attempt:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'choices')]
@@ -22,7 +22,7 @@ class Choice
     private ?Question $question = null;
 
     #[ORM\Column(type: 'text')]
-    #[Groups(['qcm:read'])]
+    #[Groups(['qcm:read', 'attempt:read'])]
     private ?string $label = null;
 
     #[ORM\Column]
@@ -62,8 +62,8 @@ class Choice
         return $this;
     }
 
-    // ✅ Groups sur le getter — obligatoire pour API Platform
-    #[Groups(['qcm:read'])]
+    // Groups sur le getter — obligatoire pour API Platform
+    #[Groups(['qcm:read' , 'attempt:read'])]
     public function isCorrect(): ?bool
     {
         return $this->isCorrect;
