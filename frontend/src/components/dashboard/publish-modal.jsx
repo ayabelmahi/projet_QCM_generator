@@ -143,7 +143,7 @@ export function PublishModal({ qcm, open, onOpenChange, onSuccess }) {
       a.click()
       a.remove()
       window.URL.revokeObjectURL(url)
-
+      onSuccess?.()
       onOpenChange(false)
     } catch (error) {
       console.error("Erreur génération PDF :", error)
