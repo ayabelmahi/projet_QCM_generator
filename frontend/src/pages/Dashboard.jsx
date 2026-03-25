@@ -571,8 +571,8 @@ export default function DashboardPage() {
     <div className="flex min-h-screen bg-white">
       <SidebarNav activePage={activePage} onNavigate={setActivePage} />
 
-      // ✅ Après
-      <div className="ml-64 flex flex-1 flex-col bg-gray-50/50 overflow-y-auto">
+
+      <div className="ml-64 flex flex-1 flex-col bg-gray-50/50">
         <TopHeader
           title={config.title}
           subtitle={config.subtitle}
